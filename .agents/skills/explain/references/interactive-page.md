@@ -14,11 +14,12 @@ uv run --with markdown-it-py --with mdit-py-plugins --with pygments python .agen
 - The reader builds an immediate, durable mental model because abstract mechanisms are grounded in a worked numerical example (e.g. forward pass logits $\rightarrow$ softmax $\rightarrow$ loss $\rightarrow$ analytical gradient) before generalizing to large-scale abstractions.
 - Explanations read like a chapter from Martin Kleppmann and *The Elements of Style*: authoritative, entity-dense, active-voiced, and focused on mechanical realities.
 
-### 2. Rhythmic, Uncluttered Reading Flow
-- The page flows seamlessly from title to subtitle, through the table of contents, and into the narrative without arbitrary horizontal rules or awkward visual clusters.
+### 2. Rhythmic, Uncluttered Reading Flow (No `---` Dividers)
+- **Do not use `---` or `<hr>` horizontal dividers**: The page must flow seamlessly through typography, white space, and clear heading hierarchies. Never insert horizontal rule lines (`---`) between sections or after titles.
 - Visual elements (Xiaohei editorial sketches, architecture diagrams, code listings) serve as natural pauses in the exposition—each visual asset directly illustrates the preceding thought and is unpacked by the subsequent paragraph, never competing for attention in adjacent stacks.
 
-### 3. Living, Interactive Visualizations & Equations
+### 3. Living, Interactive Visualizations & Equations (Mermaid Guidelines)
+- **Keep diagrams compact and horizontal**: Prefer horizontal flowcharts (`flowchart LR`, `graph LR`, or modular horizontal subgraphs) over deeply nested vertical trees (`graph TD`). Diagrams must not be excessively tall so they do not dominate the vertical reading space.
 - Architecture and data-flow diagrams are not static images; readers can explore, pan, and zoom into complex topologies rendered via `lukilabs/beautiful-mermaid`.
 - Mathematical formulas render crisply in KaTeX, preserving mathematical rigor across both inline notation and multi-line derivations.
 

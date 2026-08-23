@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{TITLE}}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <style>
 {{STYLES}}
   </style>
@@ -16,11 +16,151 @@
 {{CONTENT}}
   </div>
 
+  <script type="module">
+    import { renderMermaidSVG } from 'https://esm.sh/beautiful-mermaid@1.1.3';
+
+    function makeDiagramInteractive(wrapper, viewport, svgEl) {
+      svgEl.style.cursor = 'grab';
+      svgEl.style.transition = 'transform 0.08s ease-out';
+      svgEl.style.userSelect = 'none';
+
+      let scale = 1;
+      let pointX = 0;
+      let pointY = 0;
+      let startX = 0;
+      let startY = 0;
+      let isPanning = false;
+
+      function updateTransform() {
+        svgEl.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+      }
+
+      viewport.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.diagram-toolbar')) return;
+        e.preventDefault();
+        startX = e.clientX - pointX;
+        startY = e.clientY - pointY;
+        isPanning = true;
+        svgEl.style.cursor = 'grabbing';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        pointX = e.clientX - startX;
+        pointY = e.clientY - startY;
+        updateTransform();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          svgEl.style.cursor = 'grab';
+        }
+      });
+
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - rect.width / 2;
+        const mouseY = e.clientY - rect.top - rect.height / 2;
+
+        const delta = -e.deltaY;
+        const zoomFactor = delta > 0 ? 1.15 : 1 / 1.15;
+        const newScale = Math.min(Math.max(scale * zoomFactor, 0.4), 4.0);
+
+        if (newScale !== scale) {
+          pointX -= mouseX * (newScale / scale - 1);
+          pointY -= mouseY * (newScale / scale - 1);
+          scale = newScale;
+          updateTransform();
+        }
+      }, { passive: false });
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'diagram-toolbar';
+      toolbar.innerHTML = `
+        <button title="Zoom in" class="zoom-btn" data-action="in">+</button>
+        <button title="Zoom out" class="zoom-btn" data-action="out">−</button>
+        <button title="Reset" class="zoom-btn" data-action="reset">⟲</button>
+      `;
+
+      toolbar.querySelectorAll('.zoom-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const action = btn.dataset.action;
+          if (action === 'in') scale = Math.min(scale * 1.25, 4.0);
+          if (action === 'out') scale = Math.max(scale / 1.25, 0.4);
+          if (action === 'reset') { scale = 1; pointX = 0; pointY = 0; }
+          updateTransform();
+        });
+      });
+
+      const hint = document.createElement('div');
+      hint.className = 'diagram-hint';
+      hint.textContent = 'Drag to pan • Scroll to zoom';
+
+      wrapper.appendChild(toolbar);
+      wrapper.appendChild(hint);
+    }
+
+    // Render beautiful-mermaid diagrams
+    function renderMermaidDiagrams() {
+      document.querySelectorAll('pre code.language-mermaid, pre code.language-text').forEach((codeEl) => {
+        const code = codeEl.textContent.trim();
+        if (
+          code.startsWith('graph ') ||
+          code.startsWith('graph\n') ||
+          code.startsWith('flowchart ') ||
+          code.startsWith('flowchart\n') ||
+          code.startsWith('sequenceDiagram') ||
+          code.startsWith('stateDiagram') ||
+          code.startsWith('classDiagram') ||
+          code.startsWith('erDiagram') ||
+          code.startsWith('xychart')
+        ) {
+          try {
+            const svg = renderMermaidSVG(code, {
+              bg: '#ffffff',
+              fg: '#1f2937',
+              accent: '#2563eb',
+              line: '#4b5563',
+              border: '#cbd5e1',
+              surface: '#f8fafc',
+              transparent: true
+            });
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mermaid-wrapper';
+
+            const viewport = document.createElement('div');
+            viewport.className = 'mermaid-viewport';
+            viewport.innerHTML = svg;
+
+            wrapper.appendChild(viewport);
+            const svgEl = viewport.querySelector('svg');
+
+            codeEl.closest('pre').replaceWith(wrapper);
+
+            if (svgEl) {
+              makeDiagramInteractive(wrapper, viewport, svgEl);
+            }
+          } catch (err) {
+            console.error('Failed to render beautiful-mermaid diagram:', err);
+          }
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderMermaidDiagrams);
+    } else {
+      renderMermaidDiagrams();
+    }
+  </script>
+
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      // 1. KaTeX auto-rendering
-      if (typeof renderMathInElement === 'function') {
-        renderMathInElement(document.body, {
+    function renderMath() {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(document.body, {
           delimiters: [
             {left: '$$', right: '$$', display: true},
             {left: '\\[', right: '\\]', display: true},
@@ -30,8 +170,26 @@
           throwOnError: false
         });
       }
+      document.querySelectorAll('.math.inline').forEach(el => {
+        try {
+          window.katex.render(el.textContent, el, { displayMode: false, throwOnError: false });
+        } catch (e) {}
+      });
+      document.querySelectorAll('.math.block').forEach(el => {
+        try {
+          window.katex.render(el.textContent, el, { displayMode: true, throwOnError: false });
+        } catch (e) {}
+      });
+    }
 
-      // 2. Declarative Tabs / Inspector Component Auto-binding
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderMath);
+    } else {
+      renderMath();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Declarative Tabs / Inspector Component Auto-binding
       document.querySelectorAll('.tabs-container').forEach(container => {
         const buttons = container.querySelectorAll('.tab-buttons .btn');
         const panels = container.querySelectorAll('.tab-panel');
@@ -45,7 +203,7 @@
         });
       });
 
-      // 3. Interactive Quiz Auto-binding
+      // 2. Interactive Quiz Auto-binding
       document.querySelectorAll('.quiz-question').forEach(q => {
         const options = q.querySelectorAll('.quiz-opt');
         const feedback = q.querySelector('.quiz-feedback');

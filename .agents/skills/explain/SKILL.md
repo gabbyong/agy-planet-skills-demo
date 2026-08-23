@@ -1,25 +1,20 @@
 ---
 name: explain
-description: Use this when the user asks for an rich explanation of a code block, concept or change you're proposing. 
+description: Use this when the user asks for a rich explanation, visual guide, or interactive deep dive of a concept, codebase, algorithm, or product.
 ---
 
 # Explain
 
+When explaining a complex concept, system, or product, aim to provide a self-contained interactive artifact written in the clear, engaging, and entity-dense style of Martin Kleppmann and The Elements of Style.
 
-When the user asks for a rich and interactive explanation of a code change, git diff and pull reuqest, you should aim to provide a self-contained interactive artifact written in the clear, engaging and authoritative style of Martin Kleppman.
+Weave your explanation progressively from low-fidelity mental models to high-fidelity numerical rigor, supported by hand-drawn editorial illustrations and interactive widgets.
 
-Make sure that we progressively disclose more information to the user and encourage him to explore/learn about the topic.
+Here is the standard workflow:
 
-Eg. First establish mental models with minimal mathematics before diving into rigor
+1. **Identify Cognitive Anchors**: Find 1–3 key mechanisms or state transitions that benefit most from visual explanation. Use illustrations where appropriate, but try to use at least 1 because it makes it fun. Generate hand-drawn Xiaohei illustrations following [illustrations](./references/illustrations.md).
 
-Eg 2. Using simple illustrations to highlight core concepts as you walk the user through different parts
+2. **Draft the Markdown**: Write the explanation in a Markdown document (e.g. `/tmp/content.md`), weaving together text, LaTeX math, code blocks, embedded images, and declarative widgets following [interactive-page](./references/interactive-page.md).
 
-Eg 3. Slowly allow the user to transition 
+3. **Compile and Serve**: Compile the markdown into a self-contained HTML page using `scripts/render.py` and serve it on a local HTTP port.
 
-Here are some recomended ways that you can present the information.
-
-1. **Interactive Website** : This is great for presenting a complete high level picture to the user of the topic you're exploring. Read [interactive-page](./references/interactive-page.md) for reference
-
-Make sure that you read the corresponding reference file in `references/` so you have the most updated instructions before presenting your work and creating the first draft.
-
-Always end your artifact with a few concrete next steps that allow the user to dive deeper (Eg. Implement the method, run an experiment, see a visualisation or quiz)
+4. **Follow Up in Chat**: Provide the clickable localhost URL in your response, ask diagnostic questions to gauge understanding, and suggest concrete next steps.

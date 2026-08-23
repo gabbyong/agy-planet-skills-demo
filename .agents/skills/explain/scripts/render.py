@@ -10,7 +10,9 @@ import os
 import sys
 import argparse
 from pathlib import Path
+import re
 from markdown_it import MarkdownIt
+from mdit_py_plugins.dollarmath import dollarmath_plugin
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name, TextLexer
 from pygments.formatters import HtmlFormatter
@@ -36,9 +38,13 @@ def slugify(text: str) -> str:
 
 
 def render_markdown(md_text: str, title: str) -> str:
-    # 1. Extract H2 headings for default Table of Contents
+    # 1. Normalize LaTeX delimiters \( ... \) -> $ ... $ and \[ ... \] -> $$ ... $$
+    normalized_md = re.sub(r'\\\((.*?)\\\)', r'$\1$', md_text, flags=re.DOTALL)
+    normalized_md = re.sub(r'\\\[(.*?)\\\]', r'$$\1$$', normalized_md, flags=re.DOTALL)
+
+    # 2. Extract H2 headings for default Table of Contents
     h2_items = []
-    for line in md_text.splitlines():
+    for line in normalized_md.splitlines():
         if line.startswith("## "):
             h2_title = line[3:].strip()
             slug = slugify(h2_title)
@@ -56,25 +62,51 @@ def render_markdown(md_text: str, title: str) -> str:
   </div>
 </div>'''
 
-    # 2. Parse markdown with syntax highlighting and tables
-    md = MarkdownIt("commonmark", {
-        "html": True,
-        "highlight": highlight_code
-    }).enable("table").enable("strikethrough")
+    # 3. Parse markdown with syntax highlighting, tables, and dollarmath
+    md = (
+        MarkdownIt("commonmark", {
+            "html": True,
+            "highlight": highlight_code
+        })
+        .enable("table")
+        .enable("strikethrough")
+        .use(dollarmath_plugin, allow_space=True, allow_digits=True, double_inline=True)
+    )
 
-    rendered_body = md.render(md_text)
+    rendered_body = md.render(normalized_md)
 
     # 3. Add IDs to <h2> tags so TOC anchors work
     for h2_title, slug in h2_items:
         rendered_body = rendered_body.replace(f"<h2>{h2_title}</h2>", f'<h2 id="{slug}">{h2_title}</h2>', 1)
 
-    # Insert TOC before the first <h2> (below title and intro) if not manually defined
-    if toc_html and not "<div class=\"toc-wrapper\"" in rendered_body:
-        first_h2_idx = rendered_body.find("<h2")
-        if first_h2_idx != -1:
-            rendered_body = rendered_body[:first_h2_idx] + toc_html + "\n" + rendered_body[first_h2_idx:]
+    # Insert TOC directly after Title (h1) and Subtitle (first p)
+    if toc_html and "<div class=\"toc-wrapper\"" not in rendered_body:
+        h1_end = rendered_body.find("</h1>")
+        if h1_end != -1:
+            first_p_end = rendered_body.find("</p>", h1_end)
+            if first_p_end != -1:
+                # Add subtitle class to first paragraph if not present
+                first_p_start = rendered_body.find("<p>", h1_end)
+                if first_p_start != -1 and first_p_start < first_p_end:
+                    rendered_body = (
+                        rendered_body[:first_p_start]
+                        + '<p class="subtitle">'
+                        + rendered_body[first_p_start + 3:first_p_end + 4]
+                        + "\n" + toc_html + "\n"
+                        + rendered_body[first_p_end + 4:]
+                    )
+                else:
+                    insert_pos = first_p_end + 4
+                    rendered_body = rendered_body[:insert_pos] + "\n" + toc_html + "\n" + rendered_body[insert_pos:]
+            else:
+                insert_pos = h1_end + 5
+                rendered_body = rendered_body[:insert_pos] + "\n" + toc_html + "\n" + rendered_body[insert_pos:]
         else:
-            rendered_body = toc_html + "\n" + rendered_body
+            first_h2_idx = rendered_body.find("<h2")
+            if first_h2_idx != -1:
+                rendered_body = rendered_body[:first_h2_idx] + toc_html + "\n" + rendered_body[first_h2_idx:]
+            else:
+                rendered_body = toc_html + "\n" + rendered_body
 
     # 4. Load template & styles from resources
     template_path = RESOURCES_DIR / "template.html"

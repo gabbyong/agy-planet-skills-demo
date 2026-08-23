@@ -19,4 +19,6 @@ You should also explain what are some of the reasons why this specific benchmark
 
 2. **Provide Samples**: Then, you should explore a small slice of the dataset ( and confirm with the user before downloading the entire whole dataset ) and provide the samples to the user using the most appropriate format for the modality.
 
+When writing scripts or downloading/inspecting data in Python, always use `uv`. Check if a `.venv` exists in the local environment; if it does not exist, initialize one (e.g. `uv venv`). Execute all scripts and install necessary packages using `uv` (e.g. `uv run`, `uv pip install`).
+
 3. **Follow Ups**: Once you've done this, you should then provide the user a few potential follow ups that he can explore to explore the data, current solutions for the benchmark etc.

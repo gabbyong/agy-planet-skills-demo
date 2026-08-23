@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What is an Agent Harness?</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <style>
+:root {
+  --bg: #fdfdfc;
+  --panel-bg: #f7f6f3;
+  --panel-border: #e9e8e3;
+  --text-main: #2e2e2c;
+  --text-muted: #6e6d69;
+  --text-faint: #9c9a92;
+  --accent: #232321;
+  --accent-highlight: #394b59;
+  --code-bg: #f0eee9;
+  --node-bg: #ffffff;
+  --node-border: #d3d1c7;
+  --success: #2e7d32;
+  --danger: #c62828;
+  --font-serif: "Newsreader", "Georgia", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  padding: 0 20px 80px 20px;
+}
+
+.container {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+header {
+  margin-top: 64px;
+  margin-bottom: 48px;
+}
+
+h1 {
+  font-family: var(--font-serif);
+  font-size: 2.4rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--accent);
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Table of Contents */
+.toc-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 36px 0 48px 0;
+}
+
+.toc-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 20px 28px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.toc-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.toc-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toc-list a {
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 0.96rem;
+}
+
+.toc-list a:hover {
+  color: var(--accent-highlight);
+  text-decoration: underline;
+}
+
+h2 {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin-top: 48px;
+  margin-bottom: 16px;
+  letter-spacing: -0.015em;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 30px;
+  margin-bottom: 12px;
+}
+
+p {
+  margin-bottom: 20px;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+ul, ol {
+  margin-left: 24px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+img, video {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  margin: 20px 0;
+  display: block;
+}
+
+code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+pre {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  margin: 24px 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.95rem;
+}
+
+th, td {
+  border: 1px solid var(--panel-border);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+th {
+  background-color: var(--panel-bg);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.callout, blockquote {
+  background-color: var(--panel-bg);
+  border-left: 3px solid #6b8299;
+  padding: 18px 22px;
+  border-radius: 0 8px 8px 0;
+  margin: 28px 0;
+  font-size: 0.98rem;
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Button Component */
+button.btn {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+button.btn:hover {
+  background: #f0eee9;
+  border-color: #d3d1c7;
+}
+
+button.btn-primary, button.btn.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+button.btn-primary:hover, button.btn.btn-primary:hover {
+  background: #3a3a37;
+}
+
+/* Declarative Tabs / Inspector Component */
+.tabs-container {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 32px 0;
+}
+
+.tabs-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.tab-panel {
+  display: none;
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  line-height: 1.7;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Quiz Styles */
+.quiz-container {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 26px;
+  margin: 32px 0;
+}
+
+.quiz-question {
+  margin-bottom: 24px;
+}
+
+.quiz-question:last-child {
+  margin-bottom: 0;
+}
+
+.quiz-q-text {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-opt {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.quiz-opt:hover {
+  background: #f7f6f3;
+  border-color: #d3d1c7;
+}
+
+.quiz-opt.correct {
+  background: #edf7ed;
+  border-color: var(--success);
+  color: #1e4620;
+}
+
+.quiz-opt.incorrect {
+  background: #fdeeee;
+  border-color: var(--danger);
+  color: #7f1d1d;
+}
+
+.quiz-feedback {
+  margin-top: 8px;
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: none;
+}
+
+.quiz-feedback.visible {
+  display: block;
+}
+
+.quiz-feedback.correct {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.quiz-feedback.incorrect {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+/* Interactive Mermaid Diagram Wrapper & Controls */
+.mermaid-wrapper {
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  margin: 32px 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.mermaid-viewport {
+  width: 100%;
+  min-height: 240px;
+  max-height: 480px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.mermaid-viewport svg {
+  max-width: 100%;
+  max-height: 440px;
+  height: auto;
+  transform-origin: center center;
+}
+
+.diagram-toolbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 10;
+}
+
+.zoom-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zoom-btn:hover {
+  background: var(--panel-bg);
+  border-color: var(--panel-border);
+}
+
+.diagram-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+
+  </style>
+</head>
+<body>
+  <div class="container">
+<h1>What is an Agent Harness?</h1>
+<p class="subtitle">An architectural deep dive into the runtime scaffolding, execution loops, and sandboxing layers that transform pure next-token predictors into reliable autonomous software agents.</p>
+<div class="toc-wrapper">
+  <div class="toc-card">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list">
+      <li><a href="#the-mental-model-engine-vs-chassis">The Mental Model: Engine vs. Chassis</a></li><li><a href="#the-five-pillars-of-an-agent-harness">The Five Pillars of an Agent Harness</a></li><li><a href="#anatomy-of-the-execution-loop">Anatomy of the Execution Loop</a></li><li><a href="#concrete-implementation-a-minimalist-python-harness">Concrete Implementation: A Minimalist Python Harness</a></li><li><a href="#runtime-harness-vs-evaluation-harness">Runtime Harness vs. Evaluation Harness</a></li><li><a href="#interactive-knowledge-check">Interactive Knowledge Check</a></li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="the-mental-model-engine-vs-chassis">The Mental Model: Engine vs. Chassis</h2>
+<p>An autoregressive Large Language Model is fundamentally a stateless function: it maps a sequence of token IDs to a probability distribution over the next token ID:</p>
+<div class="math block">
+P(w_{t} \mid w_{1}, w_{2}, \dots, w_{t-1})
+</div>
+<p>A model alone cannot execute a shell command, read a file from a disk sector, observe an exit status code, or enforce a execution budget. When an LLM generates the text string <code>{&quot;name&quot;: &quot;run_bash&quot;, &quot;args&quot;: {&quot;cmd&quot;: &quot;pytest&quot;}}</code>, nothing actually runs on your computer until an external system parses that JSON, spawns a child process, captures the standard output stream, and packs that output back into the prompt buffer.</p>
+<p>That external system is the <strong>Agent Harness</strong>.</p>
+<p><img src="agent_harness_chassis.jpg" alt="Agent Harness Chassis" /></p>
+<p>If the language model is the engine, the harness is the entire vehicle chassis: the steering linkage, transmission, fuel management, safety cages, and diagnostic sensors. Without the harness, the engine simply revs in an isolated vacuum.</p>
+<h2 id="the-five-pillars-of-an-agent-harness">The Five Pillars of an Agent Harness</h2>
+<p>Every robust agent harness—whether running production agents like Antigravity, SWE-agent, OpenHands, or benchmark harnesses like SWE-bench—manages five core subsystems:</p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph Harness["Agent Harness Runtime Scaffolding"]
+        direction LR
+        A["1. Tool Dispatch"] --&gt; B["2. Sandbox Runtime"]
+        B --&gt; C["3. Output Filter"]
+        C --&gt; D["4. Context Buffer"]
+        D --&gt; E["5. Guardrails"]
+    end
+</code></pre>
+<h3>1. Tool Declaration &amp; Dispatch</h3>
+<p>The harness translates host functions (Python functions, REST endpoints, CLI binaries) into schema definitions that the model understands (typically JSON Schema). When the model emits a structured tool call, the harness intercepts the payload, deserializes arguments, validates types, and dispatches the execution to the appropriate backend.</p>
+<h3>2. Environment Isolation &amp; Sandboxing</h3>
+<p>Autonomous agents execute arbitrary code, which introduces severe risks of resource exhaustion, unintended file destruction, or rogue network calls. The harness isolates execution within ephemeral sandboxes—such as Docker containers, Firecracker microVMs, temporary Git worktrees, or restricted OS subprocesses with memory and CPU <code>ulimit</code> caps.</p>
+<h3>3. Context &amp; Stream Truncation</h3>
+<p>A single <code>cat massive_dataset.csv</code> or recursive directory listing can produce megabytes of output, instantly blowing past context limits or incurring massive token billing. The harness acts as an intelligent buffer: it slices oversized stdout streams, preserves crucial head/tail fragments, and formats the output into clean observation messages.</p>
+<h3>4. Trajectory State &amp; History Management</h3>
+<p>The harness maintains the append-only conversation trajectory. It sequences system instructions, user turns, assistant reasoning blocks, tool invocations, and environment feedback into the canonical format expected by the target model API.</p>
+<h3>5. Control Loop &amp; Guardrails</h3>
+<p>Left unconstrained, an LLM encountering an unfamiliar syntax error might loop infinitely, repeatedly running the same broken command. The harness enforces deterministic circuit breakers: maximum step limits (<span class="math inline">N_{\text{max}}</span>), dollar budget thresholds, execution timeouts (<span class="math inline">T_{\text{timeout}}</span>), and regex-based output loop detectors.</p>
+<p><img src="agent_harness_loop.jpg" alt="Agent Harness Loop" /></p>
+<h2 id="anatomy-of-the-execution-loop">Anatomy of the Execution Loop</h2>
+<p>The core execution mechanics of an agent harness operate as a synchronous or asynchronous state machine over discrete timesteps <span class="math inline">t \in \{1, 2, \dots, T\}</span>.</p>
+<pre><code class="language-mermaid">flowchart LR
+    Start["User Goal"] --&gt; Prompt["Construct Prompt Buffer $S_t$"]
+    Prompt --&gt; Model["Sample LLM: $\mathcal{M}(S_t) \to a_t$"]
+    Model --&gt; Check{"Is $a_t$ a Tool Call?"}
+    Check -- "Yes" --&gt; Exec["Execute in Sandbox: $e_t = \text{Exec}(a_t)$"]
+    Exec --&gt; Trunc["Format &amp; Truncate: $o_t = \text{Filter}(e_t)$"]
+    Trunc --&gt; Budget{"Budget &amp; Loop Check"}
+    Budget -- "Within limits" --&gt; Prompt
+    Budget -- "Exceeded" --&gt; Terminate["Halt: Budget Exhausted"]
+    Check -- "No (Final Output)" --&gt; Done["Return Agent Result"]
+</code></pre>
+<p>At step <span class="math inline">t</span>, the harness constructs state <span class="math inline">S_t</span> from system instructions, past actions <span class="math inline">a_{1:t-1}</span>, and environment observations <span class="math inline">o_{1:t-1}</span>. The model emits action <span class="math inline">a_t</span>:</p>
+<div class="math block">
+a_t = \arg\max_{a} P(a \mid S_t)
+</div>
+<p>If <span class="math inline">a_t</span> requests tool execution with timeout <span class="math inline">\tau</span>, the harness executes the action inside the sandbox:</p>
+<div class="math block">
+o_t = \text{Truncate}\Big(\text{RunSandbox}(a_t, \text{timeout}=\tau), \text{max\_bytes}=K\Big)
+</div>
+<p>The observation <span class="math inline">o_t</span> is appended to the trajectory, the step counter is incremented <span class="math inline">t \leftarrow t + 1</span>, and the loop resumes until the agent signals completion or hits safety thresholds.</p>
+<h2 id="concrete-implementation-a-minimalist-python-harness">Concrete Implementation: A Minimalist Python Harness</h2>
+<p>Here is a functional, production-style agent harness implemented in Python that illustrates sandbox timeouts, output truncation, and step budgets without third-party framework overhead:</p>
+<pre><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ToolResult</span><span class="p">:</span>
+    <span class="n">stdout</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">stderr</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">exit_code</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">is_truncated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SandboxRunner</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workdir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="n">max_output_chars</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4000</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workdir</span> <span class="o">=</span> <span class="n">workdir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout_seconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_chars</span> <span class="o">=</span> <span class="n">max_output_chars</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_bash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ToolResult</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="n">command</span><span class="p">,</span>
+                <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">cwd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span>
+                <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
+            <span class="p">)</span>
+            <span class="n">raw_out</span><span class="p">,</span> <span class="n">raw_err</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">proc</span><span class="o">.</span><span class="n">stderr</span>
+            <span class="n">exit_code</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">returncode</span>
+        <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ToolResult</span><span class="p">(</span>
+                <span class="n">stdout</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+                <span class="n">stderr</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Error: Command timed out after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="si">}</span><span class="s2">s."</span><span class="p">,</span>
+                <span class="n">exit_code</span><span class="o">=</span><span class="mi">124</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Truncate output to preserve LLM context budget</span>
+        <span class="n">is_truncated</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_out</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_chars</span>
+        <span class="k">if</span> <span class="n">is_truncated</span><span class="p">:</span>
+            <span class="n">half</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_chars</span> <span class="o">//</span> <span class="mi">2</span>
+            <span class="n">raw_out</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">raw_out</span><span class="p">[:</span><span class="n">half</span><span class="p">]</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">[... Truncated </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">raw_out</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">max_chars</span><span class="si">}</span><span class="s2"> chars ...]</span><span class="se">\n\n</span><span class="si">{</span><span class="n">raw_out</span><span class="p">[</span><span class="o">-</span><span class="n">half</span><span class="p">:]</span><span class="si">}</span><span class="s2">"</span>
+
+        <span class="k">return</span> <span class="n">ToolResult</span><span class="p">(</span><span class="n">stdout</span><span class="o">=</span><span class="n">raw_out</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">raw_err</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="n">exit_code</span><span class="p">,</span> <span class="n">is_truncated</span><span class="o">=</span><span class="n">is_truncated</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AgentHarness</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sandbox</span><span class="p">:</span> <span class="n">SandboxRunner</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sandbox</span> <span class="o">=</span> <span class="n">sandbox</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span> <span class="o">=</span> <span class="n">max_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_goal</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">llm_client</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">user_goal</span><span class="p">})</span>
+
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># 1. Model inference step</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">llm_client</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+            <span class="c1"># 2. Check if agent finished or made a tool call</span>
+            <span class="n">tool_calls</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tool_calls"</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tool_calls</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content"</span><span class="p">,</span> <span class="s2">"Task completed."</span><span class="p">)</span>
+
+            <span class="c1"># 3. Intercept and execute tool calls in sandbox</span>
+            <span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="n">tool_calls</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"arguments"</span><span class="p">,</span> <span class="p">{})</span>
+
+                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"bash"</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sandbox</span><span class="o">.</span><span class="n">execute_bash</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"command"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+                    <span class="n">obs_payload</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">"exit_code"</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">exit_code</span><span class="p">,</span>
+                        <span class="s2">"stdout"</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span>
+                        <span class="s2">"stderr"</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">stderr</span>
+                    <span class="p">}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">obs_payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"error"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Unknown tool: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">}</span>
+
+                <span class="c1"># 4. Feed observation back to conversation history</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"tool"</span><span class="p">,</span>
+                    <span class="s2">"tool_call_id"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">),</span>
+                    <span class="s2">"content"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obs_payload</span><span class="p">)</span>
+                <span class="p">})</span>
+
+        <span class="k">return</span> <span class="s2">"Terminated: Reached maximum step limit."</span>
+</code></pre>
+<h2 id="runtime-harness-vs-evaluation-harness">Runtime Harness vs. Evaluation Harness</h2>
+<p>In modern AI engineering, the word <strong>harness</strong> is commonly used in two distinct but related contexts:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Dimension</th>
+<th style="text-align:left">Production Runtime Harness (e.g. Antigravity / OpenHands)</th>
+<th style="text-align:left">Benchmark Evaluation Harness (e.g. SWE-bench / GAIA)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Primary Goal</strong></td>
+<td style="text-align:left">Accomplish user tasks safely in live production environments.</td>
+<td style="text-align:left">Measure model coding/problem-solving accuracy under standardized conditions.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Environment Lifecycle</strong></td>
+<td style="text-align:left">Long-lived workspace or user session with interactive feedback.</td>
+<td style="text-align:left">Ephemeral container spun up per task instance and immediately torn down.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Verification Method</strong></td>
+<td style="text-align:left">User acceptance, linter passes, live manual verification.</td>
+<td style="text-align:left">Automated unit test suites (<code>git diff</code> <span class="math inline">\to</span> <code>eval.sh</code> <span class="math inline">\to</span> pass/fail matrix).</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Data Integrity</strong></td>
+<td style="text-align:left">User-facing privacy, security fences, and access control.</td>
+<td style="text-align:left">Anti-contamination filters, pre-installed test harnesses, gold patch comparisons.</td>
+</tr>
+</tbody>
+</table>
+<p>In benchmarks like <strong>SWE-bench</strong>, the evaluation harness automates hundreds of parallel runs: cloning repository commits, applying agent git patches, executing repo-specific test harnesses (e.g. <code>pytest tests/test_parser.py</code>), and asserting whether failing tests flipped to passing without breaking existing test suites.</p>
+<h2 id="interactive-knowledge-check">Interactive Knowledge Check</h2>
+<div class="quiz-container">
+  <div class="quiz-question">
+    <div class="quiz-q-text">1. Which of the following is a direct responsibility of the Agent Harness rather than the LLM?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="false">Deciding which bash command is most relevant to the problem</button>
+      <button class="quiz-opt" data-correct="true">Enforcing execution timeouts and truncating oversized stdout streams</button>
+      <button class="quiz-opt" data-correct="false">Generating the probability distribution for the next token</button>
+      <button class="quiz-opt" data-correct="false">Formulating the high-level chain-of-thought plan</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+  <div class="quiz-question">
+    <div class="quiz-q-text">2. Why does an evaluation harness (like SWE-bench) require dedicated container sandboxing for every task?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="true">To ensure deterministic environments, prevent state contamination between runs, and isolate untrusted generated code</button>
+      <button class="quiz-opt" data-correct="false">To increase the token generation speed of the LLM</button>
+      <button class="quiz-opt" data-correct="false">To convert python code into raw C++ binaries</button>
+      <button class="quiz-opt" data-correct="false">To eliminate the need for tool schemas</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</div>
+
+  </div>
+
+  <script type="module">
+    import { renderMermaidSVG } from 'https://esm.sh/beautiful-mermaid@1.1.3';
+
+    function makeDiagramInteractive(wrapper, viewport, svgEl) {
+      svgEl.style.cursor = 'grab';
+      svgEl.style.transition = 'transform 0.08s ease-out';
+      svgEl.style.userSelect = 'none';
+
+      let scale = 1;
+      let pointX = 0;
+      let pointY = 0;
+      let startX = 0;
+      let startY = 0;
+      let isPanning = false;
+
+      function updateTransform() {
+        svgEl.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+      }
+
+      viewport.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.diagram-toolbar')) return;
+        e.preventDefault();
+        startX = e.clientX - pointX;
+        startY = e.clientY - pointY;
+        isPanning = true;
+        svgEl.style.cursor = 'grabbing';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        pointX = e.clientX - startX;
+        pointY = e.clientY - startY;
+        updateTransform();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          svgEl.style.cursor = 'grab';
+        }
+      });
+
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - rect.width / 2;
+        const mouseY = e.clientY - rect.top - rect.height / 2;
+
+        const delta = -e.deltaY;
+        const zoomFactor = delta > 0 ? 1.15 : 1 / 1.15;
+        const newScale = Math.min(Math.max(scale * zoomFactor, 0.4), 4.0);
+
+        if (newScale !== scale) {
+          pointX -= mouseX * (newScale / scale - 1);
+          pointY -= mouseY * (newScale / scale - 1);
+          scale = newScale;
+          updateTransform();
+        }
+      }, { passive: false });
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'diagram-toolbar';
+      toolbar.innerHTML = `
+        <button title="Zoom in" class="zoom-btn" data-action="in">+</button>
+        <button title="Zoom out" class="zoom-btn" data-action="out">−</button>
+        <button title="Reset" class="zoom-btn" data-action="reset">⟲</button>
+      `;
+
+      toolbar.querySelectorAll('.zoom-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const action = btn.dataset.action;
+          if (action === 'in') scale = Math.min(scale * 1.25, 4.0);
+          if (action === 'out') scale = Math.max(scale / 1.25, 0.4);
+          if (action === 'reset') { scale = 1; pointX = 0; pointY = 0; }
+          updateTransform();
+        });
+      });
+
+      const hint = document.createElement('div');
+      hint.className = 'diagram-hint';
+      hint.textContent = 'Drag to pan • Scroll to zoom';
+
+      wrapper.appendChild(toolbar);
+      wrapper.appendChild(hint);
+    }
+
+    // Render beautiful-mermaid diagrams
+    function renderMermaidDiagrams() {
+      document.querySelectorAll('pre code.language-mermaid, pre code.language-text').forEach((codeEl) => {
+        const code = codeEl.textContent.trim();
+        if (
+          code.startsWith('graph ') ||
+          code.startsWith('graph\n') ||
+          code.startsWith('flowchart ') ||
+          code.startsWith('flowchart\n') ||
+          code.startsWith('sequenceDiagram') ||
+          code.startsWith('stateDiagram') ||
+          code.startsWith('classDiagram') ||
+          code.startsWith('erDiagram') ||
+          code.startsWith('xychart')
+        ) {
+          try {
+            const svg = renderMermaidSVG(code, {
+              bg: '#ffffff',
+              fg: '#1f2937',
+              accent: '#2563eb',
+              line: '#4b5563',
+              border: '#cbd5e1',
+              surface: '#f8fafc',
+              transparent: true
+            });
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mermaid-wrapper';
+
+            const viewport = document.createElement('div');
+            viewport.className = 'mermaid-viewport';
+            viewport.innerHTML = svg;
+
+            wrapper.appendChild(viewport);
+            const svgEl = viewport.querySelector('svg');
+
+            codeEl.closest('pre').replaceWith(wrapper);
+
+            if (svgEl) {
+              makeDiagramInteractive(wrapper, viewport, svgEl);
+            }
+          } catch (err) {
+            console.error('Failed to render beautiful-mermaid diagram:', err);
+          }
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderMermaidDiagrams);
+    } else {
+      renderMermaidDiagrams();
+    }
+  </script>
+
+  <script>
+    function renderMath() {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+      document.querySelectorAll('.math.inline').forEach(el => {
+        try {
+          window.katex.render(el.textContent, el, { displayMode: false, throwOnError: false });
+        } catch (e) {}
+      });
+      document.querySelectorAll('.math.block').forEach(el => {
+        try {
+          window.katex.render(el.textContent, el, { displayMode: true, throwOnError: false });
+        } catch (e) {}
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderMath);
+    } else {
+      renderMath();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Declarative Tabs / Inspector Component Auto-binding
+      document.querySelectorAll('.tabs-container').forEach(container => {
+        const buttons = container.querySelectorAll('.tab-buttons .btn');
+        const panels = container.querySelectorAll('.tab-panel');
+        buttons.forEach((btn, index) => {
+          btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('btn-primary'));
+            panels.forEach(p => p.classList.remove('active'));
+            btn.classList.add('btn-primary');
+            if (panels[index]) panels[index].classList.add('active');
+          });
+        });
+      });
+
+      // 2. Interactive Quiz Auto-binding
+      document.querySelectorAll('.quiz-question').forEach(q => {
+        const options = q.querySelectorAll('.quiz-opt');
+        const feedback = q.querySelector('.quiz-feedback');
+        options.forEach(opt => {
+          opt.addEventListener('click', () => {
+            options.forEach(o => {
+              o.disabled = true;
+              if (o.dataset.correct === 'true') o.classList.add('correct');
+            });
+            const isCorrect = opt.dataset.correct === 'true';
+            if (!isCorrect) {
+              opt.classList.add('incorrect');
+              if (feedback) {
+                feedback.textContent = "Incorrect. Review the explanation above to see why.";
+                feedback.className = "quiz-feedback visible incorrect";
+              }
+            } else {
+              if (feedback) {
+                feedback.textContent = "Correct! Exactly right.";
+                feedback.className = "quiz-feedback visible correct";
+              }
+            }
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How a Large Language Model is Trained</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <style>
+:root {
+  --bg: #fdfdfc;
+  --panel-bg: #f7f6f3;
+  --panel-border: #e9e8e3;
+  --text-main: #2e2e2c;
+  --text-muted: #6e6d69;
+  --text-faint: #9c9a92;
+  --accent: #232321;
+  --accent-highlight: #394b59;
+  --code-bg: #f0eee9;
+  --node-bg: #ffffff;
+  --node-border: #d3d1c7;
+  --success: #2e7d32;
+  --danger: #c62828;
+  --font-serif: "Newsreader", "Georgia", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  padding: 0 20px 80px 20px;
+}
+
+.container {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+header {
+  margin-top: 64px;
+  margin-bottom: 48px;
+}
+
+h1 {
+  font-family: var(--font-serif);
+  font-size: 2.4rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--accent);
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Table of Contents */
+.toc-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 36px 0 48px 0;
+}
+
+.toc-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 20px 28px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.toc-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.toc-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toc-list a {
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 0.96rem;
+}
+
+.toc-list a:hover {
+  color: var(--accent-highlight);
+  text-decoration: underline;
+}
+
+h2 {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin-top: 48px;
+  margin-bottom: 16px;
+  letter-spacing: -0.015em;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 30px;
+  margin-bottom: 12px;
+}
+
+p {
+  margin-bottom: 20px;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+ul, ol {
+  margin-left: 24px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+img, video {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  margin: 20px 0;
+  display: block;
+}
+
+code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+pre {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  margin: 24px 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.95rem;
+}
+
+th, td {
+  border: 1px solid var(--panel-border);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+th {
+  background-color: var(--panel-bg);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.callout, blockquote {
+  background-color: var(--panel-bg);
+  border-left: 3px solid #6b8299;
+  padding: 18px 22px;
+  border-radius: 0 8px 8px 0;
+  margin: 28px 0;
+  font-size: 0.98rem;
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Button Component */
+button.btn {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+button.btn:hover {
+  background: #f0eee9;
+  border-color: #d3d1c7;
+}
+
+button.btn-primary, button.btn.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+button.btn-primary:hover, button.btn.btn-primary:hover {
+  background: #3a3a37;
+}
+
+/* Declarative Tabs / Inspector Component */
+.tabs-container {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 32px 0;
+}
+
+.tabs-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.tab-panel {
+  display: none;
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  line-height: 1.7;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Quiz Styles */
+.quiz-container {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 26px;
+  margin: 32px 0;
+}
+
+.quiz-question {
+  margin-bottom: 24px;
+}
+
+.quiz-question:last-child {
+  margin-bottom: 0;
+}
+
+.quiz-q-text {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-opt {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.quiz-opt:hover {
+  background: #f7f6f3;
+  border-color: #d3d1c7;
+}
+
+.quiz-opt.correct {
+  background: #edf7ed;
+  border-color: var(--success);
+  color: #1e4620;
+}
+
+.quiz-opt.incorrect {
+  background: #fdeeee;
+  border-color: var(--danger);
+  color: #7f1d1d;
+}
+
+.quiz-feedback {
+  margin-top: 8px;
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: none;
+}
+
+.quiz-feedback.visible {
+  display: block;
+}
+
+.quiz-feedback.correct {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.quiz-feedback.incorrect {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+/* Interactive Mermaid Diagram Wrapper & Controls */
+.mermaid-wrapper {
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  margin: 32px 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.mermaid-viewport {
+  width: 100%;
+  min-height: 260px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.mermaid-viewport svg {
+  max-width: 100%;
+  height: auto;
+  transform-origin: center center;
+}
+
+.diagram-toolbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 10;
+}
+
+.zoom-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zoom-btn:hover {
+  background: var(--panel-bg);
+  border-color: var(--panel-border);
+}
+
+.diagram-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+
+  </style>
+</head>
+<body>
+  <div class="container">
+<h1>How a Large Language Model Is Trained</h1>
+<p class="subtitle">An end-to-end technical guide to Pre-training, Supervised Fine-Tuning (SFT), and Preference Alignment (RLHF / DPO).</p>
+<div class="toc-wrapper">
+  <div class="toc-card">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list">
+      <li><a href="#overview-the-three-training-regimes">Overview: The Three Training Regimes</a></li><li><a href="#tokenization-and-numerical-representations">Tokenization and Numerical Representations</a></li><li><a href="#pre-training-the-foundation-model">Pre-Training: The Foundation Model</a></li><li><a href="#supervised-fine-tuning-instruction-alignment">Supervised Fine-Tuning: Instruction Alignment</a></li><li><a href="#preference-alignment-rlhf-and-direct-preference-optimization">Preference Alignment: RLHF and Direct Preference Optimization</a></li><li><a href="#pipeline-comparison-matrix">Pipeline Comparison Matrix</a></li><li><a href="#self-check-diagnostic-quiz">Self-Check Diagnostic Quiz</a></li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="overview-the-three-training-regimes">Overview: The Three Training Regimes</h2>
+<p>Training a modern Large Language Model (LLM) is not a single monolithic training run. It is an industrial machine learning pipeline divided into three distinct operational phases: <strong>knowledge acquisition</strong> (Pre-training), <strong>conversational protocol adaptation</strong> (Supervised Fine-Tuning), and <strong>preference calibration</strong> (Reinforcement Learning from Human Feedback / Direct Preference Optimization).</p>
+<p>Each stage operates under radically different data scales, computational budgets, and optimization criteria. The journey begins with trillions of uncurated web tokens and ends with a calibrated, turn-taking assistant aligned with human intent.</p>
+<pre><code class="language-mermaid">graph TD
+    A[Massive Web Corpora&lt;br/&gt;&lt;i&gt;3–15+ Trillion Tokens&lt;/i&gt;] --&gt;|Pre-Training&lt;br/&gt;~99% of Total Compute Budget| B[Base / Foundation Model]
+    B --&gt; C[Curated Dialogue Demonstrations&lt;br/&gt;&lt;i&gt;High-Quality Instruction Pairs&lt;/i&gt;]
+    C --&gt;|Supervised Fine-Tuning&lt;br/&gt;Loss Masked on Target Tokens| D[Instruction-Tuned SFT Model]
+    D --&gt; E[Pairwise Preference Dataset&lt;br/&gt;&lt;i&gt;Chosen vs Rejected Pairs&lt;/i&gt;]
+    E --&gt;|Preference Alignment&lt;br/&gt;DPO / RLHF + KL Penalty| F[Aligned Production Assistant]
+</code></pre>
+<h2 id="tokenization-and-numerical-representations">Tokenization and Numerical Representations</h2>
+<p>Neural networks cannot operate directly on arbitrary strings of Unicode text. Before any matrix multiplications occur, continuous text streams must be converted into a sequence of discrete integer identifiers selected from a predefined, immutable vocabulary <span class="math inline">V</span>.</p>
+<p>Modern language models rely almost universally on subword tokenization schemes such as <strong>Byte-Pair Encoding (BPE)</strong> (utilized by GPT-4 and LLaMA) or <strong>WordPiece / Unigram</strong> (utilized by Gemini and Gemma).</p>
+<h3>The Subword Tokenization Algorithm</h3>
+<p>BPE begins with a base vocabulary consisting of all individual byte values (256 raw bytes). It then iteratively scans a massive reference text corpus, counting all adjacent pairs of symbols, and iteratively merges the single most frequently occurring symbol pair into a new subword unit. This merge process repeats until the target vocabulary size <span class="math inline">|V|</span> (typically ranging between <span class="math inline">32{,}000</span> and <span class="math inline">128{,}256</span> entries) is satisfied.</p>
+<pre><code class="language-python"><span class="c1"># Conceptual representation of tokenization</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">"Antigravity models learn by predicting"</span>
+<span class="n">token_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">15420</span><span class="p">,</span> <span class="mi">2984</span><span class="p">,</span> <span class="mi">4392</span><span class="p">,</span> <span class="mi">1205</span><span class="p">,</span> <span class="mi">14389</span><span class="p">]</span>  <span class="c1"># Integer indices into vocabulary V</span>
+</code></pre>
+<p>Each token integer <span class="math inline">x_t \in \{0, 1, \dots, |V|-1\}</span> serves as a row index into an embedding matrix <span class="math inline">\mathbf{W}_e \in \mathbb{R}^{|V| \times d_{\text{model}}}</span>, where <span class="math inline">d_{\text{model}}</span> is the hidden dimension of the transformer (e.g., <span class="math inline">d_{\text{model}} = 4096</span>). The resulting vector represents the token in a continuous vector space before adding positional encodings.</p>
+<h2 id="pre-training-the-foundation-model">Pre-Training: The Foundation Model</h2>
+<p>Pre-training represents the most computationally demanding phase of LLM development, routinely consuming <strong>98% to 99% of the overall GPU FLOPs budget</strong> and millions of dollars in electricity. During this phase, the neural network learns world facts, syntactic patterns, programming languages, reasoning heuristics, and semantic relationships purely through self-supervised autoregressive next-token prediction.</p>
+<p><img src="01-pretraining.jpg" alt="Xiaohei operating the pre-training conveyor belt and neural matrix" /></p>
+<h3>The Autoregressive Objective Function</h3>
+<p>During pre-training, the model processes billions of unstructured text documents sourced from Common Crawl, Wikipedia, GitHub, and academic publications. The model learns by playing a continuous game of fill-in-the-blank across sequences of length <span class="math inline">T</span>.</p>
+<p>Given an input sequence of tokens <span class="math inline">\mathbf{x} = (x_1, x_2, \dots, x_T)</span>, the model is trained to maximize the log-likelihood of every token conditioned strictly on the preceding context. To prevent information leakage from future tokens, self-attention layers employ a <strong>causal lower-triangular attention mask</strong>, setting attention weights from position <span class="math inline">i</span> to position <span class="math inline">j &gt; i</span> to <span class="math inline">-\infty</span>.</p>
+<p>The empirical loss function minimized across all training batches is the standard <strong>Cross-Entropy Loss</strong>:</p>
+<div class="math block">
+\mathcal{L}_{\text{pretrain}}(\theta) = - \frac{1}{T} \sum_{t=1}^T \log P_\theta(x_t \mid x_1, x_2, \dots, x_{t-1})
+</div>
+<p>The transformation pipeline from context tokens to updated weights follows a continuous forward and backward propagation loop:</p>
+<pre><code class="language-mermaid">flowchart LR
+    A["Context: 'The capital of France is'"] --&gt; B["Multi-Head Causal Transformer"]
+    B --&gt; C["Linear Output Logits: z ∈ R^|V|"]
+    C --&gt; D["Softmax Normalization: P(x_t | x_&lt;t)"]
+    D --&gt; E["Cross-Entropy Loss: L = -log P('Paris')"]
+    E --&gt; F["AdamW Optimizer: θ ← θ - η ∇L"]
+</code></pre>
+<h3>Concrete Forward and Backward Pass Calculation</h3>
+<p>To understand the exact mechanics of a parameter update, consider a toy vocabulary of four tokens: <span class="math inline">V = \{\text{&quot;apple&quot;}: 0, \text{&quot;banana&quot;}: 1, \text{&quot;cat&quot;}: 2, \text{&quot;dog&quot;}: 3\}</span>.</p>
+<p>Suppose the model receives the context <code>&quot;The pet is a&quot;</code> and the true target continuation is <code>&quot;cat&quot;</code> (<span class="math inline">y = 2</span>).</p>
+<ol>
+<li>
+<p><strong>Logit Projection</strong>: The final hidden state vector <span class="math inline">\mathbf{h} \in \mathbb{R}^{d_{\text{model}}}</span> is multiplied by the unembedding matrix <span class="math inline">\mathbf{W}_u \in \mathbb{R}^{|V| \times d_{\text{model}}}</span>:
+<div class="math inline">\mathbf{z} = \mathbf{W}_u \mathbf{h} = [2.10, \; 0.40, \; 4.80, \; 1.20]</div></p>
+</li>
+<li>
+<p><strong>Softmax Normalization</strong>:
+<div class="math inline">P(x_t = i \mid \mathbf{x}_{&lt;t}) = \frac{e^{z_i}}{\sum_{j=0}^{3} e^{z_j}}</div>
+<div class="math inline">e^{\mathbf{z}} \approx [8.166, \; 1.492, \; 121.510, \; 3.320] \implies \sum_{j=0}^3 e^{z_j} = 134.488</div>
+<div class="math inline">\mathbf{p} = [0.0607, \; 0.0111, \; \mathbf{0.9035}, \; 0.0247]</div></p>
+</li>
+<li>
+<p><strong>Loss Evaluation</strong>:
+<div class="math inline">\mathcal{L} = -\log(p_2) = -\log(0.9035) \approx 0.1015</div></p>
+</li>
+<li>
+<p><strong>Analytical Gradient with Respect to Logits</strong>:
+<div class="math inline">\frac{\partial \mathcal{L}}{\partial z_i} = p_i - \mathbf{1}_{\{i = y\}} = [0.0607, \; 0.0111, \; -0.0965, \; 0.0247]</div></p>
+</li>
+</ol>
+<p>The optimizer (typically AdamW with cosine learning rate decay and warmup) backpropagates these gradients through all transformer attention blocks and feed-forward layers to update the parameters <span class="math inline">\theta</span>:</p>
+<div class="math block">
+\theta_{t+1} = \theta_t - \eta_t \cdot \frac{\mathbf{m}_t}{\sqrt{\mathbf{v}_t} + \epsilon} - \lambda \eta_t \theta_t
+</div>
+<video controls autoplay loop muted playsinline width="100%" style="border-radius:8px; margin: 24px 0; border: 1px solid var(--panel-border);">
+  <source src="gradient_descent.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+<h3>Empirical Scaling Laws &amp; Chinchilla Optimality</h3>
+<p>The allocation of compute between model parameters <span class="math inline">N</span> and training dataset tokens <span class="math inline">D</span> is governed by empirical scaling laws. Hoffmann et al. (DeepMind Chinchilla) demonstrated that for compute-optimal training under a fixed compute budget <span class="math inline">C \approx 6ND</span>:</p>
+<div class="math block">
+N_{\text{optimal}} \propto C^{0.5}, \quad D_{\text{optimal}} \propto C^{0.5}
+</div>
+<p>Historically, early models were significantly undertrained relative to their parameter capacity (e.g., GPT-3 with 175B parameters trained on only 300B tokens). Today, models are trained with a token-to-parameter ratio of at least <span class="math inline">20:1</span> to <span class="math inline">100:1</span> (e.g., LLaMA-3 with 8B parameters trained on over 15 Trillion tokens), trading increased pre-training compute for significantly cheaper per-token inference costs.</p>
+<h2 id="supervised-fine-tuning-instruction-alignment">Supervised Fine-Tuning: Instruction Alignment</h2>
+<p>A base foundation model is an unconditional probabilistic text predictor. If given the user prompt <code>&quot;Write a Python function to compute Fibonacci numbers&quot;</code>, a base model is as likely to generate another exam question as it is to write the solution, because web text contains numerous lists of programming exercises.</p>
+<p><strong>Supervised Fine-Tuning (SFT)</strong> (also termed <strong>Instruction Tuning</strong>) conditions the raw model to adopt the persona of an obedient, turn-taking AI assistant that follows instructions rather than simply continuing text.</p>
+<p><img src="02-sft.jpg" alt="Xiaohei teaching conversational dialogue and format alignment" /></p>
+<h3>Prompt Formats and Delimiter Tokens</h3>
+<p>Conversational datasets are serialized into linear token streams using special delimiter tokens (such as ChatML syntax) that the model cannot emit under standard text distributions. These markers define clear semantic boundaries between system instructions, user inputs, and model outputs:</p>
+<pre><code class="language-text">&lt;|im_start|&gt;system
+You are a concise, helpful assistant.&lt;|im_end|&gt;
+&lt;|im_start|&gt;user
+What is the speed of light in a vacuum?&lt;|im_end|&gt;
+&lt;|im_start|&gt;assistant
+The speed of light in a vacuum is exactly 299,792,458 meters per second.&lt;|im_end|&gt;
+</code></pre>
+<h3>The Loss Masking Mechanism</h3>
+<p>During SFT, standard cross-entropy loss is applied, but with a critical modification: <strong>loss masking</strong>. The loss contribution and corresponding gradient are strictly zeroed out for all tokens belonging to the system prompt and the user's turn:</p>
+<div class="math block">
+\mathcal{L}_{\text{SFT}}(\theta) = - \sum_{t \in \text{Assistant Tokens}} \log P_\theta(x_t \mid x_1, x_2, \dots, x_{t-1})
+</div>
+<p>If the model were forced to compute loss over the user's prompt tokens, it would expend valuable capacity attempting to model the distribution of arbitrary user questions, degrading its ability to generate high-quality, structured responses.</p>
+<pre><code class="language-mermaid">flowchart TD
+    subgraph Data ["Structured Input Sequence"]
+        U["User Prompt:&lt;br/&gt;&amp;lt;|im_start|&amp;gt;user\nWhat is the speed of light?&amp;lt;|im_end|&amp;gt;"]
+        A["Assistant Response:&lt;br/&gt;&amp;lt;|im_start|&amp;gt;assistant\nThe speed of light is ~300,000 km/s.&amp;lt;|im_end|&amp;gt;"]
+    end
+    U -.-&gt;|Loss Mask = 0&lt;br/&gt;(Gradients Zeroed Out)| L["Cross-Entropy Loss Computation"]
+    A ==&gt;|Loss Mask = 1&lt;br/&gt;(Compute Gradient)| L
+    L --&gt; UPT["Fine-Tune Model Weights θ"]
+</code></pre>
+<p>High-quality SFT requires relatively few examples (typically between <span class="math inline">10{,}000</span> and <span class="math inline">1{,}000{,}000</span> curated dialogues) compared to pre-training. Modern pipelines frequently utilize synthetic instruction generation (e.g. UltraChat, Evol-Instruct) validated by automated filtering heuristics to ensure diverse task coverage.</p>
+<h2 id="preference-alignment-rlhf-and-direct-preference-optimization">Preference Alignment: RLHF and Direct Preference Optimization</h2>
+<p>While SFT models learn the format of conversation, supervised maximum likelihood training suffers from two fundamental limitations:</p>
+<ol>
+<li><strong>Exposure Bias</strong>: During generation, errors accumulate autoregressively because the model conditions on its own prior sampled tokens rather than ground-truth tokens.</li>
+<li><strong>Objective Mismatch</strong>: Supervised training penalizes all deviations from reference tokens equally, unable to distinguish between a harmless stylistic synonym and a critical factual hallucination or safety violation.</li>
+</ol>
+<p>Preference alignment steers the model's policy distribution toward human-desirable behaviors (helpfulness, truthfulness, and harmlessness) using pairwise comparative judgements.</p>
+<p><img src="03-rlhf.jpg" alt="Xiaohei balancing preferences and tuning policy gradients" /></p>
+<h3>The Bradley-Terry Preference Model</h3>
+<p>Human annotators or specialized AI evaluator models are presented with a prompt <span class="math inline">x</span> and a pair of completions <span class="math inline">(y_w, y_l)</span>, where <span class="math inline">y_w</span> is the preferred (winning) response and <span class="math inline">y_l</span> is the dispreferred (losing) response.</p>
+<p>Under the Bradley-Terry formulation, the probability that completion <span class="math inline">y_w</span> is preferred over <span class="math inline">y_l</span> is modeled as:</p>
+<div class="math block">
+P(y_w \succ y_l \mid x) = \sigma\left(r(x, y_w) - r(x, y_l)\right) = \frac{1}{1 + e^{-(r(x, y_w) - r(x, y_l))}}
+</div>
+<p>where <span class="math inline">r(x, y)</span> is a scalar reward value representing the quality of response <span class="math inline">y</span> for prompt <span class="math inline">x</span>.</p>
+<h3>PPO vs. Direct Preference Optimization (DPO)</h3>
+<p>The alignment literature has evolved from complex reinforcement learning pipelines to elegant direct optimization algorithms:</p>
+<h4>Classical RLHF via Proximal Policy Optimization (PPO)</h4>
+<p>In traditional RLHF (introduced by Christiano et al. and Ouyang et al.):</p>
+<ol>
+<li>A separate <strong>Reward Model</strong> <span class="math inline">r_\psi(x, y)</span> is first trained on preference pairs via binary cross-entropy.</li>
+<li>The language model policy <span class="math inline">\pi_\theta</span> is then optimized using PPO against the reward model with a <strong>Kullback-Leibler (KL) divergence penalty</strong>:
+<div class="math inline">\max_\theta \; \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta}\left[ r_\psi(x, y) - \beta \mathbb{D}_{\text{KL}}\left(\pi_\theta(y \mid x) \parallel \pi_{\text{ref}}(y \mid x)\right) \right]</div></li>
+</ol>
+<p>The frozen reference policy <span class="math inline">\pi_{\text{ref}}</span> ensures the model does not suffer from <em>reward hacking</em> (e.g., generating endless repetitive text that exploits flaws in the reward model) or catastrophic forgetting of base linguistic competencies.</p>
+<h4>Direct Preference Optimization (DPO)</h4>
+<p>Rafailov et al. (2023) showed that the constrained RL problem has an exact analytical solution. The implicit reward can be expressed directly in terms of log-probabilities:</p>
+<div class="math block">
+r(x, y) = \beta \log \frac{\pi_\theta(y \mid x)}{\pi_{\text{ref}}(y \mid x)}
+</div>
+<p>Substituting this directly into the Bradley-Terry objective yields the <strong>DPO Loss Function</strong>:</p>
+<div class="math block">
+\mathcal{L}_{\text{DPO}}(\theta) = - \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_{\text{ref}}(y_w \mid x)} - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)} \right) \right]
+</div>
+<pre><code class="language-mermaid">flowchart TD
+    P["User Prompt: x"] --&gt; M["Policy Model π_θ"]
+    P --&gt; R["Reference Model π_ref (Frozen)"]
+    M --&gt;|Candidate A| Y1["Winning Response: y_w"]
+    M --&gt;|Candidate B| Y2["Losing Response: y_l"]
+    Y1 --&gt; DPO["DPO Loss Engine&lt;br/&gt;log σ( β log(π_θ(y_w)/π_ref(y_w)) - β log(π_θ(y_l)/π_ref(y_l)) )"]
+    Y2 --&gt; DPO
+    R -.-&gt;|Regularization Anchor| DPO
+    DPO --&gt; OPT["Policy Gradient Optimization"]
+</code></pre>
+<p>DPO completely eliminates the need to train a standalone reward model, sample dynamic rollouts during training, or tune delicate PPO hyperparameter schedules.</p>
+<h2 id="pipeline-comparison-matrix">Pipeline Comparison Matrix</h2>
+<p>The following table summarizes the structural differences across the three core training stages:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Dimension</th>
+<th style="text-align:left">Pre-Training</th>
+<th style="text-align:left">Supervised Fine-Tuning (SFT)</th>
+<th style="text-align:left">Preference Alignment (DPO / RLHF)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Primary Goal</strong></td>
+<td style="text-align:left">Knowledge acquisition &amp; linguistic modeling</td>
+<td style="text-align:left">Instruction following &amp; dialogue format alignment</td>
+<td style="text-align:left">Nuanced preference calibration &amp; safety guardrails</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Data Format</strong></td>
+<td style="text-align:left">Unstructured text documents (web, code, books)</td>
+<td style="text-align:left">Multi-turn prompt &amp; ideal response pairs</td>
+<td style="text-align:left">Triplets of <code>(prompt, winning_response, losing_response)</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Data Scale</strong></td>
+<td style="text-align:left"><span class="math inline">3\text{T} - 15\text{T}+</span> tokens</td>
+<td style="text-align:left"><span class="math inline">10{,}000 - 1{,}000{,}000</span> high-quality examples</td>
+<td style="text-align:left"><span class="math inline">50{,}000 - 500{,}000</span> comparison pairs</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Loss Function</strong></td>
+<td style="text-align:left">Causal Next-Token Cross-Entropy</td>
+<td style="text-align:left">Masked Response Cross-Entropy</td>
+<td style="text-align:left">Direct Preference Optimization (DPO) / PPO Loss</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Compute Budget</strong></td>
+<td style="text-align:left"><span class="math inline">\approx 98\% - 99\%</span> of total FLOPs</td>
+<td style="text-align:left"><span class="math inline">&lt; 1\%</span> of total FLOPs</td>
+<td style="text-align:left"><span class="math inline">\approx 1\%</span> of total FLOPs</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Hardware Setup</strong></td>
+<td style="text-align:left">Thousands of GPUs (Megatron-LM, FSDP, TP/PP/EP)</td>
+<td style="text-align:left">Hundreds of GPUs (FSDP, LoRA / Full Parameter)</td>
+<td style="text-align:left">Hundreds of GPUs (Policy + Reference Model)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Output Artifact</strong></td>
+<td style="text-align:left">Base Foundation Model (e.g. <code>LLaMA-3-8B-Base</code>)</td>
+<td style="text-align:left">Instruct/Chat Model (e.g. <code>LLaMA-3-8B-SFT</code>)</td>
+<td style="text-align:left">Aligned Assistant (e.g. <code>LLaMA-3-8B-Instruct</code>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="self-check-diagnostic-quiz">Self-Check Diagnostic Quiz</h2>
+<p>Test your understanding of the end-to-end training pipeline:</p>
+<div class="quiz-container">
+  <div class="quiz-question">
+    <div class="quiz-q-text">1. Why is loss masking applied to user prompt tokens during Supervised Fine-Tuning (SFT)?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="true">To focus the model's gradient updates entirely on generating high-quality assistant responses rather than predicting arbitrary user query syntax.</button>
+      <button class="quiz-opt" data-correct="false">Because user prompts are encrypted across distributed GPU tensor parallel shards.</button>
+      <button class="quiz-opt" data-correct="false">To prevent the model from learning the vocabulary embedding mappings of user tokens.</button>
+      <button class="quiz-opt" data-correct="false">To reduce GPU VRAM consumption to zero during the forward pass.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+  <div class="quiz-question">
+    <div class="quiz-q-text">2. What critical problem does the KL-divergence penalty $ \mathbb{D}_{\text{KL}}(\pi_\theta \parallel \pi_{\text{ref}}) $ solve in RLHF and DPO?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="true">It prevents reward hacking and ensures the policy does not drift uncontrollably away from its original linguistic capabilities.</button>
+      <button class="quiz-opt" data-correct="false">It calculates the exact learning rate schedule for the AdamW optimizer.</button>
+      <button class="quiz-opt" data-correct="false">It automatically quantizes the model weights from FP16 down to INT4 precision.</button>
+      <button class="quiz-opt" data-correct="false">It allows the transformer to exceed its maximum context window length.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+  <div class="quiz-question">
+    <div class="quiz-q-text">3. According to the Chinchilla scaling laws, what is the compute-optimal strategy when scaling total FLOPs budget?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="true">Scale model parameter count and dataset token count in equal proportions (N ∝ C^0.5, D ∝ C^0.5).</button>
+      <button class="quiz-opt" data-correct="false">Keep dataset size fixed at 300B tokens and increase parameter count exponentially.</button>
+      <button class="quiz-opt" data-correct="false">Triple the learning rate while keeping batch size constant.</button>
+      <button class="quiz-opt" data-correct="false">Scale the context window length quadratically with parameter count.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+  <div class="quiz-question">
+    <div class="quiz-q-text">4. In next-token cross-entropy loss with vocabulary size |V|, what is the exact gradient with respect to logit z_i when token k is the ground truth target?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="true">p_i - 1 if i = k, otherwise p_i (i.e. p_i - y_i).</button>
+      <button class="quiz-opt" data-correct="false">log(p_i) multiplied by the hidden dimension d_model.</button>
+      <button class="quiz-opt" data-correct="false">The inverse square root of the attention head dimension.</button>
+      <button class="quiz-opt" data-correct="false">Zero for all vocabulary indices except the maximum logit.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+  <div class="quiz-question">
+    <div class="quiz-q-text">5. What is the fundamental operational advantage of Direct Preference Optimization (DPO) over classical PPO-based RLHF?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-correct="true">DPO analytically expresses the reward in terms of policy probabilities, removing the need to train a separate reward model or sample dynamic rollouts during training.</button>
+      <button class="quiz-opt" data-correct="false">DPO avoids using gradient descent by solving parameters via matrix inversion.</button>
+      <button class="quiz-opt" data-correct="false">DPO completely eliminates the need for human or AI preference comparison data.</button>
+      <button class="quiz-opt" data-correct="false">DPO converts decoder-only transformers into encoder-decoder architectures.</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</div>
+
+  </div>
+
+  <script type="module">
+    import { renderMermaidSVG } from 'https://esm.sh/beautiful-mermaid@1.1.3';
+
+    function makeDiagramInteractive(wrapper, viewport, svgEl) {
+      svgEl.style.cursor = 'grab';
+      svgEl.style.transition = 'transform 0.08s ease-out';
+      svgEl.style.userSelect = 'none';
+
+      let scale = 1;
+      let pointX = 0;
+      let pointY = 0;
+      let startX = 0;
+      let startY = 0;
+      let isPanning = false;
+
+      function updateTransform() {
+        svgEl.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+      }
+
+      viewport.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.diagram-toolbar')) return;
+        e.preventDefault();
+        startX = e.clientX - pointX;
+        startY = e.clientY - pointY;
+        isPanning = true;
+        svgEl.style.cursor = 'grabbing';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        pointX = e.clientX - startX;
+        pointY = e.clientY - startY;
+        updateTransform();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          svgEl.style.cursor = 'grab';
+        }
+      });
+
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - rect.width / 2;
+        const mouseY = e.clientY - rect.top - rect.height / 2;
+
+        const delta = -e.deltaY;
+        const zoomFactor = delta > 0 ? 1.15 : 1 / 1.15;
+        const newScale = Math.min(Math.max(scale * zoomFactor, 0.4), 4.0);
+
+        if (newScale !== scale) {
+          pointX -= mouseX * (newScale / scale - 1);
+          pointY -= mouseY * (newScale / scale - 1);
+          scale = newScale;
+          updateTransform();
+        }
+      }, { passive: false });
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'diagram-toolbar';
+      toolbar.innerHTML = `
+        <button title="Zoom in" class="zoom-btn" data-action="in">+</button>
+        <button title="Zoom out" class="zoom-btn" data-action="out">−</button>
+        <button title="Reset" class="zoom-btn" data-action="reset">⟲</button>
+      `;
+
+      toolbar.querySelectorAll('.zoom-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const action = btn.dataset.action;
+          if (action === 'in') scale = Math.min(scale * 1.25, 4.0);
+          if (action === 'out') scale = Math.max(scale / 1.25, 0.4);
+          if (action === 'reset') { scale = 1; pointX = 0; pointY = 0; }
+          updateTransform();
+        });
+      });
+
+      const hint = document.createElement('div');
+      hint.className = 'diagram-hint';
+      hint.textContent = 'Drag to pan • Scroll to zoom';
+
+      wrapper.appendChild(toolbar);
+      wrapper.appendChild(hint);
+    }
+
+    // Render beautiful-mermaid diagrams
+    function renderMermaidDiagrams() {
+      document.querySelectorAll('pre code.language-mermaid, pre code.language-text').forEach((codeEl) => {
+        const code = codeEl.textContent.trim();
+        if (
+          code.startsWith('graph ') ||
+          code.startsWith('graph\n') ||
+          code.startsWith('flowchart ') ||
+          code.startsWith('flowchart\n') ||
+          code.startsWith('sequenceDiagram') ||
+          code.startsWith('stateDiagram') ||
+          code.startsWith('classDiagram') ||
+          code.startsWith('erDiagram') ||
+          code.startsWith('xychart')
+        ) {
+          try {
+            const svg = renderMermaidSVG(code, {
+              bg: '#ffffff',
+              fg: '#1f2937',
+              accent: '#2563eb',
+              line: '#4b5563',
+              border: '#cbd5e1',
+              surface: '#f8fafc',
+              transparent: true
+            });
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mermaid-wrapper';
+
+            const viewport = document.createElement('div');
+            viewport.className = 'mermaid-viewport';
+            viewport.innerHTML = svg;
+
+            wrapper.appendChild(viewport);
+            const svgEl = viewport.querySelector('svg');
+
+            codeEl.closest('pre').replaceWith(wrapper);
+
+            if (svgEl) {
+              makeDiagramInteractive(wrapper, viewport, svgEl);
+            }
+          } catch (err) {
+            console.error('Failed to render beautiful-mermaid diagram:', err);
+          }
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderMermaidDiagrams);
+    } else {
+      renderMermaidDiagrams();
+    }
+  </script>
+
+  <script>
+    function renderMath() {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+      document.querySelectorAll('.math.inline').forEach(el => {
+        try {
+          window.katex.render(el.textContent, el, { displayMode: false, throwOnError: false });
+        } catch (e) {}
+      });
+      document.querySelectorAll('.math.block').forEach(el => {
+        try {
+          window.katex.render(el.textContent, el, { displayMode: true, throwOnError: false });
+        } catch (e) {}
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderMath);
+    } else {
+      renderMath();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Declarative Tabs / Inspector Component Auto-binding
+      document.querySelectorAll('.tabs-container').forEach(container => {
+        const buttons = container.querySelectorAll('.tab-buttons .btn');
+        const panels = container.querySelectorAll('.tab-panel');
+        buttons.forEach((btn, index) => {
+          btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('btn-primary'));
+            panels.forEach(p => p.classList.remove('active'));
+            btn.classList.add('btn-primary');
+            if (panels[index]) panels[index].classList.add('active');
+          });
+        });
+      });
+
+      // 2. Interactive Quiz Auto-binding
+      document.querySelectorAll('.quiz-question').forEach(q => {
+        const options = q.querySelectorAll('.quiz-opt');
+        const feedback = q.querySelector('.quiz-feedback');
+        options.forEach(opt => {
+          opt.addEventListener('click', () => {
+            options.forEach(o => {
+              o.disabled = true;
+              if (o.dataset.correct === 'true') o.classList.add('correct');
+            });
+            const isCorrect = opt.dataset.correct === 'true';
+            if (!isCorrect) {
+              opt.classList.add('incorrect');
+              if (feedback) {
+                feedback.textContent = "Incorrect. Review the explanation above to see why.";
+                feedback.className = "quiz-feedback visible incorrect";
+              }
+            } else {
+              if (feedback) {
+                feedback.textContent = "Correct! Exactly right.";
+                feedback.className = "quiz-feedback visible correct";
+              }
+            }
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -22,7 +22,7 @@ Weave your explanation progressively from low-fidelity mental models to high-fid
 
 ## Workflow
 
-1. **Identify Cognitive Anchors**: Find 1–3 key mechanisms or state transitions that benefit most from visual explanation. Use illustrations where appropriate, but try to use at least 1 because it makes it fun. Generate hand-drawn Xiaohei illustrations following [illustrations](./references/illustrations.md) or mathematical vector animations following [3b1b](./references/3b1b.md).
+1. **Identify Cognitive Anchors**: Find 1–3 key mechanisms or state transitions that benefit most from visual explanation. Use illustrations or animations where appropriate. Generate hand-drawn Xiaohei illustrations following [illustrations](./references/illustrations.md) or mathematical vector animations following [3b1b](./references/3b1b.md).
 
 2. **Draft the Markdown**: Write the explanation in a Markdown document (e.g. `/tmp/content.md`), weaving together text, LaTeX math, code blocks, embedded images, videos, and declarative widgets following [interactive-page](./references/interactive-page.md).
 

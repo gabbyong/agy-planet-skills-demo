@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <style>
+{{STYLES}}
+  </style>
+</head>
+<body>
+  <div class="container">
+{{CONTENT}}
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. KaTeX auto-rendering
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+
+      // 2. Declarative Tabs / Inspector Component Auto-binding
+      document.querySelectorAll('.tabs-container').forEach(container => {
+        const buttons = container.querySelectorAll('.tab-buttons .btn');
+        const panels = container.querySelectorAll('.tab-panel');
+        buttons.forEach((btn, index) => {
+          btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('btn-primary'));
+            panels.forEach(p => p.classList.remove('active'));
+            btn.classList.add('btn-primary');
+            if (panels[index]) panels[index].classList.add('active');
+          });
+        });
+      });
+
+      // 3. Interactive Quiz Auto-binding
+      document.querySelectorAll('.quiz-question').forEach(q => {
+        const options = q.querySelectorAll('.quiz-opt');
+        const feedback = q.querySelector('.quiz-feedback');
+        options.forEach(opt => {
+          opt.addEventListener('click', () => {
+            options.forEach(o => {
+              o.disabled = true;
+              if (o.dataset.correct === 'true') o.classList.add('correct');
+            });
+            const isCorrect = opt.dataset.correct === 'true';
+            if (!isCorrect) {
+              opt.classList.add('incorrect');
+              if (feedback) {
+                feedback.textContent = "Incorrect. Review the explanation above to see why.";
+                feedback.className = "quiz-feedback visible incorrect";
+              }
+            } else {
+              if (feedback) {
+                feedback.textContent = "Correct! Exactly right.";
+                feedback.className = "quiz-feedback visible correct";
+              }
+            }
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

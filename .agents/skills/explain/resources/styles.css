@@ -1,0 +1,351 @@
+:root {
+  --bg: #fdfdfc;
+  --panel-bg: #f7f6f3;
+  --panel-border: #e9e8e3;
+  --text-main: #2e2e2c;
+  --text-muted: #6e6d69;
+  --text-faint: #9c9a92;
+  --accent: #232321;
+  --accent-highlight: #394b59;
+  --code-bg: #f0eee9;
+  --node-bg: #ffffff;
+  --node-border: #d3d1c7;
+  --success: #2e7d32;
+  --danger: #c62828;
+  --font-serif: "Newsreader", "Georgia", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  padding: 0 20px 80px 20px;
+}
+
+.container {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+header {
+  margin-top: 64px;
+  margin-bottom: 48px;
+}
+
+h1 {
+  font-family: var(--font-serif);
+  font-size: 2.4rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--accent);
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Table of Contents */
+.toc-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 36px 0 48px 0;
+}
+
+.toc-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 20px 28px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.toc-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.toc-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toc-list a {
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 0.96rem;
+}
+
+.toc-list a:hover {
+  color: var(--accent-highlight);
+  text-decoration: underline;
+}
+
+h2 {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin-top: 48px;
+  margin-bottom: 16px;
+  letter-spacing: -0.015em;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 30px;
+  margin-bottom: 12px;
+}
+
+p {
+  margin-bottom: 20px;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+ul, ol {
+  margin-left: 24px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+img, video {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  margin: 20px 0;
+  display: block;
+}
+
+code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+pre {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  margin: 24px 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.95rem;
+}
+
+th, td {
+  border: 1px solid var(--panel-border);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+th {
+  background-color: var(--panel-bg);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.callout, blockquote {
+  background-color: var(--panel-bg);
+  border-left: 3px solid #6b8299;
+  padding: 18px 22px;
+  border-radius: 0 8px 8px 0;
+  margin: 28px 0;
+  font-size: 0.98rem;
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Button Component */
+button.btn {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+button.btn:hover {
+  background: #f0eee9;
+  border-color: #d3d1c7;
+}
+
+button.btn-primary, button.btn.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+button.btn-primary:hover, button.btn.btn-primary:hover {
+  background: #3a3a37;
+}
+
+/* Declarative Tabs / Inspector Component */
+.tabs-container {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 32px 0;
+}
+
+.tabs-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.tab-panel {
+  display: none;
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  line-height: 1.7;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Quiz Styles */
+.quiz-container {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 26px;
+  margin: 32px 0;
+}
+
+.quiz-question {
+  margin-bottom: 24px;
+}
+
+.quiz-question:last-child {
+  margin-bottom: 0;
+}
+
+.quiz-q-text {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-opt {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.quiz-opt:hover {
+  background: #f7f6f3;
+  border-color: #d3d1c7;
+}
+
+.quiz-opt.correct {
+  background: #edf7ed;
+  border-color: var(--success);
+  color: #1e4620;
+}
+
+.quiz-opt.incorrect {
+  background: #fdeeee;
+  border-color: var(--danger);
+  color: #7f1d1d;
+}
+
+.quiz-feedback {
+  margin-top: 8px;
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: none;
+}
+
+.quiz-feedback.visible {
+  display: block;
+}
+
+.quiz-feedback.correct {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.quiz-feedback.incorrect {
+  background: #ffebee;
+  color: #b71c1c;
+}

@@ -8,7 +8,7 @@ uv run --with markdown-it-py --with mdit-py-plugins --with pygments python .agen
 
 Write in the clear, engaging, entity-dense style of Martin Kleppmann and The Elements of Style. For algorithms and mathematical systems, always trace a single concrete numerical calculation forward and backward before discussing high-level abstractions.
 
-Weave your explanation progressively using text, equations (`\(...\)` / `$...$` inline, `$$...$$` display), embedded illustrations, syntax-highlighted code blocks, and declarative HTML components.
+Weave your explanation progressively using text, equations (`\(...\)` / `$...$` inline, `$$...$$` display), embedded illustrations, syntax-highlighted code blocks, and declarative HTML components. Never stack visual assets (illustrations, diagrams, code blocks) directly adjacent to each other; always interleave them with explanatory narrative or mathematical derivations.
 
 `scripts/render.py` provides clean Notion/Zen styling out of the box with KaTeX math rendering, syntax highlighting, and an automatically generated Table of Contents directly under the title and subtitle.
 

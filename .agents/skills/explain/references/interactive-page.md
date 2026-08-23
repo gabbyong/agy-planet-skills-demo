@@ -6,15 +6,30 @@ When creating an interactive web explanation, write the content in a temporary m
 uv run --with markdown-it-py --with mdit-py-plugins --with pygments python .agents/skills/explain/scripts/render.py /tmp/content.md -o /tmp/YYYY-MM-DD-explanation-<topic>.html
 ```
 
-Write in the clear, engaging, entity-dense style of Martin Kleppmann and The Elements of Style. For algorithms and mathematical systems, always trace a single concrete numerical calculation forward and backward before discussing high-level abstractions.
+---
 
-Weave your explanation progressively using text, equations (`\(...\)` / `$...$` inline, `$$...$$` display), embedded illustrations, syntax-highlighted code blocks, and declarative HTML components. Never stack visual assets (illustrations, diagrams, code blocks) directly adjacent to each other; always interleave them with explanatory narrative or mathematical derivations.
+## What Good Looks Like
 
-`scripts/render.py` provides clean Notion/Zen styling out of the box with KaTeX math rendering, syntax highlighting, and an automatically generated Table of Contents directly under the title and subtitle.
+### 1. Intuition Grounded in Concrete Numbers
+- The reader builds an immediate, durable mental model because abstract mechanisms are grounded in a worked numerical example (e.g. forward pass logits $\rightarrow$ softmax $\rightarrow$ loss $\rightarrow$ analytical gradient) before generalizing to large-scale abstractions.
+- Explanations read like a chapter from Martin Kleppmann and *The Elements of Style*: authoritative, entity-dense, active-voiced, and focused on mechanical realities.
 
-### Custom HTML & Components
+### 2. Rhythmic, Uncluttered Reading Flow
+- The page flows seamlessly from title to subtitle, through the table of contents, and into the narrative without arbitrary horizontal rules or awkward visual clusters.
+- Visual elements (Xiaohei editorial sketches, architecture diagrams, code listings) serve as natural pauses in the exposition—each visual asset directly illustrates the preceding thought and is unpacked by the subsequent paragraph, never competing for attention in adjacent stacks.
 
-If you want to add custom HTML (such as interactive widgets or self-check quizzes), this is how you do it:
+### 3. Living, Interactive Visualizations & Equations
+- Architecture and data-flow diagrams are not static images; readers can explore, pan, and zoom into complex topologies rendered via `lukilabs/beautiful-mermaid`.
+- Mathematical formulas render crisply in KaTeX, preserving mathematical rigor across both inline notation and multi-line derivations.
+
+### 4. Active Retention & Self-Correction
+- Readers can actively test their grasp of subtle mechanics through self-contained interactive diagnostic questions that provide immediate corrective insight.
+
+---
+
+## Custom HTML & Components
+
+If you want to add custom HTML (such as self-check quizzes), embed declarative markup directly:
 
 **Self-Check Quiz (`.quiz-container`):**
 ```html
@@ -31,3 +46,4 @@ If you want to add custom HTML (such as interactive widgets or self-check quizze
 ```
 
 Always ensure the background HTTP server is running (`python3 -m http.server <port> --directory /tmp`) and output the clickable localhost link in your chat response. Use your chat response to ask diagnostic questions and suggest concrete next steps.
+

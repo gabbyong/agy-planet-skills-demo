@@ -6,51 +6,59 @@ Use this reference to generate voiceover narration and audio explainers using Ge
 
 ## What Good Looks Like
 
-- **Voice Choice**: Use `Orus` as the standard voice model for authoritative, crisp, and natural technical delivery.
-- **Pacing**: Spoken scripts should be deliberate and unhurried, matched to the conceptual weight of the material.
-- **Modularity**: Generate audio in distinct conceptual segments so animation keyframes or page sections can synchronize with spoken milestones.
+- **Voice Choice**: Use `Orus` as the standard voice model for crisp, natural delivery.
+- **Engaging, Excited Tone**: Prompt the TTS model for genuine curiosity, enthusiasm, and dynamic cadence—like an excited science communicator (e.g., 3Blue1Brown). Avoid dry or robotic monologues.
+- **Audio-First Pacing**: Always generate audio and measure its duration *before* assembling animations so scenes synchronize smoothly.
 
 ---
 
 ## Generating Audio with Gemini TTS
 
-Use the Google GenAI Interactions API with `model="gemini-3.1-flash-tts-preview"`, `voice="Orus"`, and write out the raw PCM data using Python's standard `wave` library:
+Always use the Google GenAI Interactions API (`client.interactions.create`) with `model="gemini-3.1-flash-tts-preview"` (do NOT use `models.generate_content`, which is restricted to text completions).
 
 ```python
 import os
 import wave
 import base64
+import subprocess
 from google import genai
 
-def wave_file(filename, pcm, channels=1, rate=24000, sample_width=2):
-    with wave.open(filename, "wb") as wf:
-        wf.setnchannels(channels)
-        wf.setsampwidth(sample_width)
-        wf.setframerate(rate)
-        wf.writeframes(pcm)
+def generate_narration(text: str, output_path: str = "/tmp/narration.wav", voice: str = "Orus") -> float:
+    """Generates speech audio with Gemini TTS and returns duration in seconds."""
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    interaction = client.interactions.create(
+        model="gemini-3.1-flash-tts-preview",
+        input=f"Read with genuine excitement, curiosity, and engaging technical pacing like an enthusiastic 3Blue1Brown explainer: {text}",
+        response_format={"type": "audio"},
+        generation_config={
+            "speech_config": [
+                {"voice": voice}
+            ]
+        }
+    )
 
-interaction = client.interactions.create(
-    model="gemini-3.1-flash-tts-preview",
-    input="Read with clear authority and natural pacing: Behold: SeeFood. A Convolutional Neural Network classifying hotdogs.",
-    response_format={"type": "audio"},
-    generation_config={
-        "speech_config": [
-            {"voice": "Orus"}
-        ]
-    }
-)
+    pcm_data = base64.b64decode(interaction.output_audio.data)
+    with wave.open(output_path, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(24000)
+        wf.writeframes(pcm_data)
 
-pcm_data = base64.b64decode(interaction.output_audio.data)
-wave_file("/tmp/narration.wav", pcm_data)
+    res = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", output_path],
+        capture_output=True, text=True
+    )
+    duration = float(res.stdout.strip())
+    print(f"Generated narration ({duration:.2f}s): {output_path}")
+    return duration
 ```
 
 ---
 
 ## Measuring Duration & Concatenation
 
-To synchronize audio with animations or interactive web steps, inspect exact durations with `ffprobe`:
+To inspect exact durations with `ffprobe`:
 
 ```bash
 # Check exact duration in seconds

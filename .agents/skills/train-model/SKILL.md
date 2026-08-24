@@ -42,13 +42,11 @@ Present the user with a structured proposal specifying:
 - Request explicit user approval on the proposed plan before triggering GPU compute.
 - Only launch remote execution once the user gives the green light.
 
-## Dataset Caching with Modal Volumes
+## Dataset Ingestion and Caching
 
-Use persistent Modal Volumes to eliminate redundant dataset downloads across runs:
-
-- Attach a persistent volume `modal.Volume.from_name("dataset-cache", create_if_missing=True)` mounted at `/cache`.
-- Point `HF_HOME=/cache/huggingface` or `TORCH_HOME=/cache/torch` so datasets, tokenizers, and pretrained weights are stored persistently.
-- Commit newly downloaded data via `vol.commit()` so other containers reuse the cache immediately without incurring network latency.
+- **Prefer Hugging Face Hosted Datasets**: Always prefer loading datasets hosted on Hugging Face Hub (e.g. via `datasets.load_dataset(...)`) rather than downloading from legacy academic/university servers to avoid severe rate-limiting and connection throttling.
+- **Bake Datasets into Container Images**: If you need to use a dataset multiple times across runs or parallel containers, bake the dataset directly into the Modal container image build step (or pre-seed the volume) so workers start with zero download latency.
+- **Persistent Modal Volumes**: Attach a persistent volume `modal.Volume.from_name("dataset-cache", create_if_missing=True)` mounted at `/cache`. Point `HF_HOME=/cache/huggingface` or `TORCH_HOME=/cache/torch` so datasets, tokenizers, and pretrained weights persist across executions. Commit newly downloaded data via `vol.commit()` so other containers can reuse it immediately.
 
 ## Training Script Standards
 

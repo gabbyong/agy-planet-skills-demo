@@ -1,34 +1,46 @@
 ---
 name: explain
-description: Use this when the user asks for a rich explanation, visual guide, or interactive deep dive of a concept, codebase, algorithm, or product.
+description: Use this when the user asks for an explanation, visual guide, interactive deep dive, or architecture walkthrough of a concept, algorithm, or model.
 ---
 
 # Explain
 
-When explaining a complex concept, system, or product, aim to provide a self-contained interactive artifact written in the clear, engaging, and entity-dense style of Martin Kleppmann and The Elements of Style.
-
-Weave your explanation progressively from low-fidelity mental models to high-fidelity numerical rigor, supported by hand-drawn editorial illustrations, mathematical animations, and interactive widgets.
+Deliver deep, engaging, and multi-modal explanations by immediately generating two complementary artifacts:
+1. An **Antigravity Markdown Artifact** in chat.
+2. A **Self-Contained Interactive HTML Artifact** ready for local viewing.
 
 ---
 
-## Media & Modalities Reference
+## 1. Immediate Artifact Generation
 
-- [**Interactive Web Pages**](./references/interactive-page.md): Markdown-to-HTML pipeline with KaTeX math, `lukilabs/beautiful-mermaid` interactive diagrams, and diagnostic quizzes.
-- [**Editorial Illustrations**](./references/illustrations.md): Hand-drawn character illustrations (Xiaohei) as cognitive anchors.
+When invoked, do not stall or produce plain text in chat. Immediately create:
+
+1. **The Antigravity Artifact (`artifact.md`)**:
+   - Write to the conversation artifact directory (`<appDataDir>/brain/<conversation-id>/...`).
+   - Structure with entity-dense technical breakdowns, KaTeX math formulas, Mermaid architecture diagrams, and GitHub callout alerts.
+   - Embed media using `![caption](/absolute/path/to/media.jpg)`.
+
+2. **The Interactive HTML Artifact (`index.html`)**:
+   - Produce a standalone, styled HTML document (using `scripts/render.py` or a dedicated single-file HTML/CSS/JS page).
+   - Include interactive UI controls: dynamic parameter sliders, step-by-step state machines, reactive visualizers, or self-checking quizzes.
+   - Reference templates in `examples/explain/` (e.g., `agent-harness`, `llm-training`, `resnet-18`).
+
+---
+
+## 2. Media & Modalities Reference
+
+- [**Interactive Web Pages**](./references/interactive-page.md): KaTeX math, beautiful diagrams, and interactive state widgets.
+- [**Editorial Illustrations**](./references/illustrations.md): Hand-drawn character illustrations (Xiaohei) for intuitive conceptual anchoring.
+- [**3Blue1Brown Animations**](./references/3b1b.md): Mathematical vector simulations and optimization dynamics rendered via Manim.
 - [**Audio & Voiceover**](./references/audio.md): Studio narration using Gemini TTS (`Orus` voice).
-- [**3Blue1Brown Animations**](./references/3b1b.md): Mathematical vector animations and neural network simulations via Manim.
 
 ---
 
-## Workflow
+## 3. Serving & Presenting to User
 
-1. **Identify Cognitive Anchors**: Find 1–3 key mechanisms or state transitions that benefit most from visual explanation. Use illustrations or animations where appropriate. Generate hand-drawn Xiaohei illustrations following [illustrations](./references/illustrations.md) or mathematical vector animations following [3b1b](./references/3b1b.md).
-
-2. **Draft the Markdown**: Write the explanation in a Markdown document (e.g. `/tmp/content.md`), weaving together text, LaTeX math, code blocks, embedded images, videos, and declarative widgets following [interactive-page](./references/interactive-page.md).
-
-3. **Generate Voiceover (Optional)**: If narration is requested, produce studio audio following [audio](./references/audio.md) using the `Orus` voice model and sync it to the video or page.
-
-4. **Compile and Serve**: Compile the markdown into a self-contained HTML page using `scripts/render.py` and serve it on a local HTTP port.
-
-5. **Follow Up in Chat**: Provide the clickable localhost URL in your response, ask diagnostic questions to gauge understanding, and suggest concrete next steps.
+1. **Serve Locally**: Serve the interactive HTML artifact (e.g. `python3 -m http.server 8080 --directory <dir>`).
+2. **Respond in Chat**:
+   - Point the user to the generated Antigravity artifact.
+   - Provide the clickable link to the interactive HTML page (`http://localhost:8080/...`).
+   - Summarize the single most non-obvious mathematical or architectural intuition.
 

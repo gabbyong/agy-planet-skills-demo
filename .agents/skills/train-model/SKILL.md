@@ -1,71 +1,123 @@
 ---
 name: train-model
-description: Use this when the user asks to train, fine-tune, or benchmark models on remote compute (Modal) with Weights & Biases tracking and Hugging Face Hub uploads.
+description: Use this when the user asks to train, fine-tune, or benchmark models on Google Cloud Vertex AI (including NVIDIA A100 GPUs) with GCS artifact storage.
 ---
 
-# Model Training on Remote Compute
+# Model Training on Google Cloud Vertex AI
 
-## Key Validation and Environment Gate
+Orchestrate training jobs on Google Cloud Vertex AI using pre-built PyTorch GPU containers and NVIDIA A100 compute.
 
-Before creating or launching any training code, validate the environment and remote secrets by running the credential checker:
+---
+
+## 1. Environment & GCP Validation Gate
+
+Before submitting remote jobs, verify GCP authentication and project configuration:
 
 ```bash
-python3 .agents/skills/train-model/scripts/verify_credentials.py
+python3 .agents/skills/train-model/scripts/verify_gcp_credentials.py
 ```
 
-Verify all three platforms:
-- **Modal**: Profile authenticated (`modal profile current`).
-- **Hugging Face (`HF_TOKEN`)**: Authenticated with write access (`https://huggingface.co/api/whoami-v2`).
-- **Weights & Biases (`WANDB_API_KEY`)**: Authenticated (`https://api.wandb.ai/graphql`).
+Check:
+1. **Active Project**: `gcloud config get-value project`
+2. **Vertex AI API**: `aiplatform.googleapis.com` enabled
+3. **Artifact Staging Bucket**: GCS bucket (e.g., `gs://<project>-vertex-artifacts/`)
 
-If any credential is missing or invalid:
-- Immediately prompt the user for the specific missing key.
-- Do not proceed with mock tokens or placeholder runs.
-- Once provided, persist the key to `~/.config/shell.env` and update Modal secrets (`modal secret create <name> <KEY=VAL> --force`).
+---
 
-## Experiment Planning and Parameter Proposal
+## 2. Compute Right-Sizing & Hardware Tiers
 
-Before launching jobs, discuss and align on the training setup:
-- Propose architecture choices and hyperparameters (learning rate, batch size, scheduler, epochs).
-- Clarify trade-offs (e.g. convergence speed vs memory, learning rate warmup, regularization).
-- Provide an estimated execution duration and resource profile (defaulting to `gpu="A100"`).
+Do not default to heavy, expensive accelerators when not required. Match hardware to the model workload and project quotas:
 
-## Concrete Job Proposal and Result Shape
+| Tier | Machine Type | Accelerator | When to Use | Cost / Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Local Inner Loop** | Apple Silicon / CPU | `mps` / `cpu` | Fast validation (<20s), rapid prototyping, micro-runs | Free, instant iteration |
+| **Cloud CPU** | `n1-standard-4` | None | Baseline cloud jobs, no quota prerequisites | Pennies, zero quota barriers |
+| **Economical GPU (Recommended)** | `n1-standard-4` | `NVIDIA_TESLA_T4` (1x) | Vision models (SVHN, CIFAR), small CNNs, lightweight fine-tuning | ~$0.35/hr, 10x cheaper than A100 |
+| **Modern GPU** | `g2-standard-4` | `NVIDIA_L4` (1x) | Modern PyTorch workloads, diffusion, mid-size models | ~$0.70/hr, 24GB VRAM |
+| **Heavy Accelerator** | `a2-highgpu-1g` | `NVIDIA_TESLA_A100` (1x) | Large language models, massive batch training, distributed DDP | ~$3.67/hr, requires quota approval |
 
-Present the user with a structured proposal specifying:
-- The exact job(s) to run (single training run vs hyperparameter sweep).
-- The exact shape of the output (number of models, checkpoint format `.pt` / `safetensors`, metadata `config.json`, model card `README.md`).
-- Target destinations (Weights & Biases project name and Hugging Face repository ID).
+### Pre-Built Container Image URIs
+Vertex AI requires specific image tags (including python version suffix):
+- **GPU Training**: `us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-1.py310:latest`
+- **CPU Training**: `us-docker.pkg.dev/vertex-ai/training/pytorch-xla.2-1.py310:latest`
 
-## Explicit Confirmation Gate
+---
 
-- Request explicit user approval on the proposed plan before triggering GPU compute.
-- Only launch remote execution once the user gives the green light.
+## 3. Fast Local Micro-Run (Pre-flight Validation)
 
-## Dataset Ingestion and Caching
+Before dispatching cloud compute, run a fast 1-epoch / 10-batch micro-run locally using `.venv`:
 
-- **Prefer Hugging Face Hosted Datasets**: Always prefer loading datasets hosted on Hugging Face Hub (e.g. via `datasets.load_dataset(...)`) rather than downloading from legacy academic/university servers to avoid severe rate-limiting and connection throttling.
-- **Bake Datasets into Container Images**: If you need to use a dataset multiple times across runs or parallel containers, bake the dataset directly into the Modal container image build step (or pre-seed the volume) so workers start with zero download latency.
-- **Persistent Modal Volumes**: Attach a persistent volume `modal.Volume.from_name("dataset-cache", create_if_missing=True)` mounted at `/cache`. Point `HF_HOME=/cache/huggingface` or `TORCH_HOME=/cache/torch` so datasets, tokenizers, and pretrained weights persist across executions. Commit newly downloaded data via `vol.commit()` so other containers can reuse it immediately.
+```bash
+uv run python train.py --dry-run
+```
 
-## Training Script Standards
+Ensure loss decreases, tensor shapes match, and the model checkpoint serializes cleanly (`models/model.pt`).
 
-- Use `modal.App` with an explicit container image installing dependencies via `pip_install`.
-- Default to `gpu="A100"` for high compute throughput.
-- Attach required secrets (`modal.Secret.from_name("wandb")`, `modal.Secret.from_name("hf-secret")`).
-- Use early returns and functional structure.
+---
 
-## Weights & Biases Experiment Tracking
+## 4. Submitting Vertex AI Custom Job
 
-- Initialize `wandb.init()` with project name, run configuration, model hyperparameters, dataset details, and architecture name.
-- Print the live W&B run URL immediately (`run.get_url()`) and provide the direct clickable link to the user.
-- Log per-epoch and step-level metrics including training loss, training accuracy, validation loss, validation accuracy, and learning rate.
-- Close the run cleanly using `wandb.finish()` upon training completion.
+### Python SDK (`google-cloud-aiplatform`)
 
-## Hugging Face Hub Artifact Publishing
+Always use `job.submit()` rather than `job.run(sync=False)` to avoid background thread race conditions, and pass `HF_TOKEN` from `.env` to allow access to gated/authenticated datasets:
 
-- Use `huggingface_hub.HfApi` authenticated with `HF_TOKEN`.
-- Create repository if it does not already exist via `api.create_repo(repo_id=..., exist_ok=True)`.
-- Upload the best model checkpoint weights (`.pt` or `model.safetensors`).
-- Upload accompanying metadata, configuration summary, and a concise model card `README.md` describing model architecture, dataset, and benchmark results.
-- Provide the user with the direct link to the Hugging Face model repository upon upload.
+### Standard Target Environment
+- **GCP Project**: `gen-lang-client-0287142723` (Mimir)
+- **Region**: `us-central1`
+- **Staging & Artifact Bucket**: `gs://mimir-svhn-artifacts-519332626090`
+- **Container Images**:
+  - GPU (T4/L4/A100): `us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-1.py310:latest`
+  - CPU: `us-docker.pkg.dev/vertex-ai/training/pytorch-xla.2-1.py310:latest`
+
+```python
+import os
+import dotenv
+from google.cloud import aiplatform
+
+dotenv.load_dotenv(".env")
+
+PROJECT_ID = "gen-lang-client-0287142723"
+REGION = "us-central1"
+BUCKET = "gs://mimir-svhn-artifacts-519332626090"
+
+aiplatform.init(
+    project=PROJECT_ID,
+    location=REGION,
+    staging_bucket=f"{BUCKET}/staging",
+)
+
+job = aiplatform.CustomJob.from_local_script(
+    display_name="svhn-cnn-training",
+    script_path="train.py",
+    container_uri="us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-1.py310:latest",
+    requirements=["datasets>=2.14.0", "torchvision>=0.15.0", "pillow", "python-dotenv"],
+    machine_type="n1-standard-4",
+    accelerator_type="NVIDIA_TESLA_T4",
+    accelerator_count=1,
+    base_output_dir=f"{BUCKET}/models/svhn-cnn",
+    args=["--epochs", "5", "--batch-size", "64"],
+    environment_variables={"HF_TOKEN": os.getenv("HF_TOKEN", "")},
+)
+
+# Submit synchronously to Vertex AI API without blocking local terminal
+job.submit()
+print(f"Custom Job launched: {job.resource_name}")
+```
+
+### CLI Alternative (`gcloud`)
+
+```bash
+gcloud ai custom-jobs create \
+  --project=gen-lang-client-0287142723 \
+  --region=us-central1 \
+  --display-name="svhn-cnn-training" \
+  --worker-pool-spec=machine-type=n1-standard-4,accelerator-type=NVIDIA_TESLA_T4,accelerator-count=1,container-image-uri=us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-1.py310:latest \
+  --args="--epochs=5,--batch-size=64"
+```
+
+---
+
+## 5. Artifact Publishing & Handoff to Cloud Run
+
+- The training script saves the model weights to `$AIP_MODEL_DIR` (which Vertex AI syncs to GCS) or mirrors to `models/model.pt`.
+- Hand off the exported checkpoint to the Cloud Run service (`google-cloud` skill) for serverless inference deployment.

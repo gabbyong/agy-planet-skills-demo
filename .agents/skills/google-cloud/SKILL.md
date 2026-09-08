@@ -1,48 +1,93 @@
 ---
 name: google-cloud
-description: Use this when the user asks to deploy, manage, or configure applications, containers, endpoints, or infrastructure on Google Cloud Platform (such as Cloud Run, Cloud Build, Artifact Registry, or GCS).
+description: Use this when the user asks to deploy, manage, or configure applications, containers, endpoints, or ML services on Google Cloud Platform (Cloud Run, Vertex AI, GCS, Cloud Build).
 ---
 
-# Google Cloud Platform Deployment
+# Google Cloud Platform & Serverless ML Deployment
 
-## Credential and Project Validation
+Deploy ML inference services and web applications to Google Cloud Run with zero-friction source builds and embedded interactive testing interfaces.
 
-Before running deployment commands, verify local GCP authentication and the active project:
+---
+
+## 1. Project & Service Gate
+
+Before running deployment commands, verify GCP authentication and project settings:
 
 ```bash
+# Ensure Python 3.10+ is used by gcloud (avoids system Python 3.9 issues on macOS)
+export CLOUDSDK_PYTHON="$(pwd)/.venv/bin/python"
+
 gcloud config list --format="json"
 ```
 
-Ensure the active project has the necessary service APIs enabled:
-- Cloud Run: `run.googleapis.com`
-- Cloud Build: `cloudbuild.googleapis.com`
-- Artifact Registry: `artifactregistry.googleapis.com`
-
-Enable missing services directly if required:
-
+Ensure required APIs are enabled on the target project:
 ```bash
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
 ```
 
-## Cloud Run Serverless Deployments
+---
 
-Deploy containerized services directly using source-based Cloud Run deployments:
+## 2. Serverless ML Inference Service Pattern
 
-- Ensure the application directory contains a valid `Dockerfile` listening on `PORT` (default `8080`).
-- Execute source deployment with explicit region and access policies:
+When packaging an ML model (e.g. PyTorch checkpoint from Vertex AI or local MPS) for Cloud Run:
+
+1. **Lightweight FastAPI Service**:
+   - `/health`: Fast probe returning `{"status": "healthy", "checkpoint_loaded": bool}`.
+   - `/predict`: Accepts base64 image or tensor payload, runs inference with PyTorch (`torch.no_grad()`), and returns class probabilities.
+   - `/`: Serves a self-contained, responsive HTML/JS web UI allowing visitors to draw on a canvas or test samples with real-time confidence bars.
+   - **Resilient Path Resolution**: Check multiple candidate paths for checkpoints (e.g., `/app/models/...` and `models/...`) so the service works identically in local development and within the container.
+
+2. **Source Build Optimization (`.gcloudignore`)**:
+   Always create a `.gcloudignore` file to exclude local virtual environments and caches from the build upload:
+   ```text
+   .git
+   .venv
+   __pycache__
+   *.pyc
+   scratch
+   .agents
+   ```
+
+3. **Minimal Dockerfile**:
+   ```dockerfile
+   FROM python:3.11-slim
+   WORKDIR /app
+   COPY requirements.txt .
+   RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+   COPY src/ /app/src/
+   COPY models/ /app/models/
+   COPY service/app.py /app/app.py
+   ENV PORT=8080
+   CMD ["sh", "-c", "exec uvicorn app:app --host 0.0.0.0 --port ${PORT}"]
+   ```
+
+---
+
+## 3. One-Command Source Deployment
+
+Deploy directly from source without manual Docker registry tagging:
 
 ```bash
-gcloud run deploy <service-name> \
-  --source <source-dir> \
-  --region <region> \
+gcloud run deploy svhn-classifier \
+  --project gen-lang-client-0287142723 \
+  --source . \
+  --region us-central1 \
   --allow-unauthenticated \
-  --memory <memory> \
-  --cpu <cpu>
+  --memory 1Gi \
+  --cpu 1
 ```
 
-## Build Progress and Deployment Communication
+- **Target Project**: `gen-lang-client-0287142723` (Mimir)
+- **Region**: `us-central1`
+- **Live Endpoint**: `https://svhn-classifier-519332626090.us-central1.run.app`
 
-- Extract and share the live Google Cloud Build log URL immediately so the user can track image compilation and registry push progress.
-- Inform the user that the Cloud Run service entry is created only after the container image finishes pushing.
-- Once the deployment finishes, verify the endpoint live via `curl` against `/health` or test API endpoints.
-- Provide the user with the direct live endpoint HTTPS URL upon successful health check verification.
+---
+
+## 4. Verification & Presentation
+
+1. Extract and output the live Google Cloud Build log URL so the build can be monitored.
+2. Once the service deploys, run a quick automated smoke test:
+   ```bash
+   curl -s https://svhn-classifier-519332626090.us-central1.run.app/health
+   ```
+3. Share the live HTTPS URL with the user, highlighting the embedded interactive web UI for testing predictions live in browser.

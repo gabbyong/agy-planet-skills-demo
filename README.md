@@ -19,8 +19,8 @@ Ask Antigravity to discover state-of-the-art research papers on continental-scal
 > Ensure you have the Antigravity default science skills installed (specifically [`literature-search-arxiv`](file:///Users/gabbyong/.gemini/config/plugins/science/skills/literature_search_arxiv/SKILL.md)).
 
 **Outputs produced:**
-- `agri-landscape-paper.pdf` (*Smallholder Agricultural Landscape Understanding at a National Scale*, Dua et al., Google DeepMind & Google Research, KDD '26 / arXiv:2411.05359).
-- `farmlevel-paper-paper.pdf` (*Farm-Level, In-Season Crop Identification for India*, Deshpande et al., Google DeepMind / arXiv:2507.02972).
+- Comprehensive list of relevant arXiv publications, abstracts, and identifiers (including *Smallholder Agricultural Landscape Understanding at a National Scale*, Dua et al., Google DeepMind & Google Research, KDD '26 / arXiv:2411.05359).
+- **PDF Download via Browser**: Once the relevant paper is identified, you can ask the `@browser` skill to open the paper's arXiv abstract/HTML page and download the PDF directly into your workspace as `agri-landscape-paper.pdf` (and `farmlevel-paper-paper.pdf`).
 
 ---
 
@@ -40,12 +40,15 @@ Inspect the field samples my multicrop disease dataset and show me an in-chat vi
 ---
 
 ### 3. Interactive Visual Explanation & 3Blue1Brown Explainer Video
-Reference Figure 1 of the discovered paper to generate a multi-modal interactive explainer and narrated animation:
+Provide the downloaded paper as an input (`[agri-landscape-paper.pdf]`) and reference Figure 1 to generate a multi-modal interactive explainer and narrated animation:
 
 ```text
 Create an interactive visual explanation of the processing steps in Figure 1 of [agri-landscape-paper.pdf] paper in illustration style.
 create a 3Blue1Brown style explainer video with narration
 ```
+
+**Inputs:**
+- `agri-landscape-paper.pdf`: Research paper PDF downloaded via `@browser` from the Prompt 1 literature search.
 
 **Outputs produced:**
 - Self-contained showcase package in [`examples/explain/alu/`](examples/explain/alu/):
@@ -59,41 +62,46 @@ create a 3Blue1Brown style explainer video with narration
 
 ---
 
-## 📂 Folder Organization & Output Files
+## 📂 Folder Organization & Workflow Mapping
 
 ```text
-agy-planet-skills-demo/
-├── README.md                                          # This guide & quickstart prompts
-├── assets/
-│   └── multicrop_inspector_carousel.png               # [Output: Prompt 2] In-chat visual carousel screenshot
-├── .agents/
-│   └── skills/                                        # Antigravity Skills definitions
-│       ├── explain/                                   # Skill: Interactive HTML & video explainers
-│       ├── visualize-dataset/                         # Skill: Slicing & in-chat visual carousels
-│       ├── train-model/                               # Skill: Local micro-runs & PyTorch training
-│       └── google-cloud/                              # Skill: FastAPI containerization & Cloud Run deploy
-└── examples/
-    ├── README.md                                      # Showcase directory index & local server instructions
-    │
-    ├── visualize-dataset/
-    │   └── multicrop-disease/                         # [Output: Prompt 2] Dataset inspection showcase
-    │       ├── README.md                              # Class breakdown, YOLO annotations, pathogen profiles
-    │       └── multicrop_inspector_carousel.png       # Live inspector screenshot
-    │
-    └── explain/
-        ├── alu/                                       # [Output: Prompt 3] Agricultural Landscape Understanding
-        │   ├── index.html                             # Interactive single-page web explainer
-        │   ├── content.md                             # Technical breakdown & narration script
-        │   ├── alu_figure1_storytelling.mp4           # 3B1B motion graphics video
-        │   ├── alu_figure1_narrated.mp4               # Synchronized narrated walkthrough video
-        │   ├── alu_figure1_narration.m4a              # Standalone narration audio track
-        │   ├── xiaohei_figure1_alu.jpg                # Hand-drawn pipeline storyboard illustration
-        │   └── generate_narration_video.py            # Narration synthesis & muxing script
+Workspace / Repository Layout:
+├── agri-landscape-paper.pdf                           # [Input: Prompt 3 | Downloaded via @browser after Prompt 1]
+├── farmlevel-paper-paper.pdf                          # [Downloaded via @browser after Prompt 1]
+├── Multicrop Disease Dataset/                         # [Input: Prompt 2 | Attached benchmark dataset]
+│
+└── agy-planet-skills-demo/ (skills-demo repo)
+    ├── README.md                                      # Quickstart guide & workflow prompts
+    ├── assets/
+    │   └── multicrop_inspector_carousel.png           # [Output: Prompt 2] In-chat visual carousel screenshot
+    ├── .agents/
+    │   └── skills/                                    # Antigravity Skills definitions
+    │       ├── explain/                               # Skill: Interactive HTML & video explainers
+    │       ├── visualize-dataset/                     # Skill: Slicing & in-chat visual carousels
+    │       ├── train-model/                           # Skill: Local micro-runs & PyTorch training
+    │       └── google-cloud/                          # Skill: FastAPI containerization & Cloud Run deploy
+    └── examples/
+        ├── README.md                                  # Showcase index & local serving instructions
         │
-        ├── agent-harness/                             # Systems architecture explainer
-        ├── cnn/                                       # Convolutional neural network explainer
-        ├── llm-training/                              # Pretraining, SFT, and RLHF explainer
-        └── resnet-18/                                 # ResNet-18 residual learning explainer
+        ├── visualize-dataset/
+        │   └── multicrop-disease/                     # [Output: Prompt 2] Dataset inspection showcase
+        │       ├── README.md                          # Class breakdown, YOLO annotations, pathogen profiles
+        │       └── multicrop_inspector_carousel.png   # Live inspector screenshot
+        │
+        └── explain/
+            ├── alu/                                   # [Output: Prompt 3] Agricultural Landscape Understanding
+            │   ├── index.html                         # Interactive single-page web explainer
+            │   ├── content.md                         # Technical breakdown & narration script
+            │   ├── alu_figure1_storytelling.mp4       # 3B1B motion graphics video
+            │   ├── alu_figure1_narrated.mp4           # Synchronized narrated walkthrough video
+            │   ├── alu_figure1_narration.m4a          # Standalone narration audio track
+            │   ├── xiaohei_figure1_alu.jpg            # Hand-drawn pipeline storyboard illustration
+            │   └── generate_narration_video.py        # Narration synthesis & muxing script
+            │
+            ├── agent-harness/                         # Systems architecture explainer
+            ├── cnn/                                   # Convolutional neural network explainer
+            ├── llm-training/                          # Pretraining, SFT, and RLHF explainer
+            └── resnet-18/                             # ResNet-18 residual learning explainer
 ```
 
 ---

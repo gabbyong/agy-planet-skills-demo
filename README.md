@@ -8,7 +8,7 @@ An end-to-end showcase of autonomous AI agent workflows orchestrating dataset ex
 Rapidly slice and inspect benchmarks without heavy upfront downloads. Using streaming and fast slicing, agents inspect subsets from the [`ufldl-stanford/svhn`](https://huggingface.co/datasets/ufldl-stanford/svhn) (Street View House Numbers) dataset on Hugging Face and provide immediate visual feedback using native in-chat `carousel` components.
 
 ### 2. Multi-Modal Visual Explainers (`explain`)
-Deliver deep, engaging explanations by generating self-contained interactive HTML artifacts. These visualizers feature dynamic parameter sliders, state machines, architectural walkthroughs, and self-checking interactive quizzes (see the showcases in [`examples/explain/`](examples/explain/)).
+Deliver deep, engaging explanations by generating self-contained interactive HTML artifacts. These visualizers feature dynamic parameter sliders, state machines, architectural walkthroughs, and self-checking interactive quizzes (see the showcases in [`examples/explain/`](examples/explain/), including systems architectures like Agent Harness, deep learning dynamics in LLM Training & ResNet-18, and continental satellite pipelines in **Agricultural Landscape Understanding (ALU)**).
 
 ### 3. Local Model Training (`train-model`)
 Validate and train models locally using rapid micro-runs on Apple Silicon (`mps`) or CPU before serializing clean PyTorch checkpoints for production.

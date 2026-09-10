@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALU Pipeline: Continental Field Boundary Delineation (Figure 1 Explainer)</title>
+  <!-- Tailwind CSS via allowlisted CDN -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --font-hand: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif;
+    }
+    .sketch-border {
+      border: 2px solid #2d3748;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      box-shadow: 3px 4px 0px rgba(0,0,0,0.12);
+    }
+    .sketch-card {
+      border: 2px solid #334155;
+      border-radius: 18px 22px 16px 20px/20px 16px 22px 18px;
+      transition: all 0.25s ease;
+    }
+    .sketch-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 5px 6px 0px rgba(0,0,0,0.1);
+    }
+    .hand-drawn-font {
+      font-family: var(--font-hand);
+    }
+    @keyframes bobble {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-4px) rotate(1deg); }
+    }
+    .bobble-anim {
+      animation: bobble 3s ease-in-out infinite;
+    }
+    @keyframes snipCut {
+      0% { transform: scale(1) rotate(0deg); }
+      30% { transform: scale(1.15) rotate(-15deg); }
+      70% { transform: scale(0.9) rotate(10deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .snip-active {
+      animation: snipCut 0.4s ease-in-out;
+    }
+    .glow-pulse {
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-3 sm:p-6 min-h-screen">
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Top Hero Banner (Illustration Style) -->
+    <header class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-7 shadow-md relative overflow-hidden">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+            <span>🌾 KDD '26 Research Deep Dive</span>
+            <span>•</span>
+            <span>Figure 1 Visual Explainer</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--foreground)] flex items-center gap-3">
+            <span>ALU Pipeline: Continental Field Delineation</span>
+            <span class="text-xl px-2.5 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-sm font-medium">Illustration Style</span>
+          </h1>
+          <p class="text-sm sm:text-base text-[var(--muted-foreground)] max-w-3xl">
+            How does Google's <strong>Agricultural Landscape Understanding (ALU)</strong> turn messy raw satellite pixels into authoritative cadastral boundaries for 100 million smallholder farms? Explore the 4 key stages below!
+          </p>
+        </div>
+
+        <!-- Mode Switches & Actions -->
+        <div class="flex flex-wrap items-center gap-2 self-stretch md:self-auto">
+          <button id="btnPlayNarratedVideo" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition shadow-sm">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4l12 6-12 6V4z"/></svg>
+            <span>Watch 3B1B Video</span>
+          </button>
+          <button id="btnToggleAudioNarration" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[var(--background)] hover:bg-slate-100 dark:hover:bg-slate-800 text-[var(--foreground)] border border-[var(--border)] font-medium text-sm transition">
+            <span id="audioIcon">🔊</span>
+            <span id="audioLabel">Play Narration</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Audio Progress Bar -->
+      <div id="audioProgressBarContainer" class="hidden mt-4 pt-3 border-t border-[var(--border)]">
+        <div class="flex items-center justify-between text-xs text-[var(--muted-foreground)] mb-1">
+          <span id="narrationTime">00:00 / 00:32</span>
+          <span id="narrationScene">Scene: Multi-Temporal Stack</span>
+        </div>
+        <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+          <div id="audioProgressBar" class="bg-emerald-500 h-full w-0 transition-all duration-200"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Pipeline Step Stepper Bar -->
+    <nav class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+      <button class="step-nav-btn p-3 rounded-xl border text-left transition relative bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-900 dark:text-emerald-200 font-semibold shadow-sm" data-step="1">
+        <div class="text-[11px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold">Step 1</div>
+        <div class="text-xs sm:text-sm truncate">Multi-Temporal & S2</div>
+      </button>
+      <button class="step-nav-btn p-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-left transition" data-step="2">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Step 2</div>
+        <div class="text-xs sm:text-sm truncate">5-Head Panoptic U-Net</div>
+      </button>
+      <button class="step-nav-btn p-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-left transition" data-step="3">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Step 3</div>
+        <div class="text-xs sm:text-sm truncate">BAT Stitching</div>
+      </button>
+      <button class="step-nav-btn p-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-left transition" data-step="4">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Step 4</div>
+        <div class="text-xs sm:text-sm truncate">✂️ Dagger Removal</div>
+      </button>
+      <button class="step-nav-btn p-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-left transition col-span-2 sm:col-span-1" data-step="5">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Step 5</div>
+        <div class="text-xs sm:text-sm truncate">Cadastral & S2 API</div>
+      </button>
+    </nav>
+
+    <!-- MAIN INTERACTIVE STAGE CONTAINER -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Interactive Diagram / Visual Canvas (7 Cols) -->
+      <div class="lg:col-span-7 space-y-4">
+
+        <!-- STAGE 1: Multi-Temporal Stack & S2 Grid -->
+        <section id="stepSection1" class="step-section bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-emerald-500 text-white inline-flex items-center justify-center text-xs">1</span>
+              <span>Multi-Temporal Stacking & S2 Spatial Sharding</span>
+            </h2>
+            <span class="text-xs font-mono px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded border border-[var(--border)]">Fig 1(a-b)</span>
+          </div>
+
+          <!-- Interactive Satellite Stacking & Margin Simulator -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-[var(--border)] space-y-4">
+            <!-- Stacking Canvas -->
+            <div class="relative h-64 bg-slate-900 rounded-lg overflow-hidden border border-slate-700 flex items-center justify-center">
+              <svg id="svgTemporalStack" class="w-full h-full" viewBox="0 0 600 300">
+                <!-- Grid background -->
+                <defs>
+                  <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                  </pattern>
+                </defs>
+                <rect width="600" height="300" fill="url(#gridPattern)" />
+
+                <!-- Multi-temporal Passes (3D Isometric Stack) -->
+                <!-- Layer 1: Kharif (Monsoon Green) -->
+                <g id="layerKharif" class="transition-all duration-500 cursor-pointer" transform="translate(180, 160)">
+                  <polygon points="0,40 180,0 260,30 80,70" fill="rgba(34, 197, 94, 0.45)" stroke="#22c55e" stroke-width="2"/>
+                  <text x="120" y="45" fill="#86efac" font-size="12" font-weight="bold">t₁: Kharif (Monsoon Lush Green)</text>
+                </g>
+
+                <!-- Layer 2: Rabi (Golden Soil) -->
+                <g id="layerRabi" class="transition-all duration-500 cursor-pointer" transform="translate(180, 115)">
+                  <polygon points="0,40 180,0 260,30 80,70" fill="rgba(234, 179, 8, 0.4)" stroke="#eab308" stroke-width="2"/>
+                  <text x="120" y="45" fill="#fde047" font-size="12" font-weight="bold">t₂: Rabi (Golden Soil Post-Harvest)</text>
+                </g>
+
+                <!-- Layer 3: Cloud Mask -->
+                <g id="layerCloud" class="transition-all duration-500 cursor-pointer" transform="translate(180, 70)">
+                  <polygon points="0,40 180,0 260,30 80,70" fill="rgba(148, 163, 184, 0.35)" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4,4"/>
+                  <!-- Cloud blob -->
+                  <circle cx="90" cy="35" r="18" fill="white" opacity="0.8"/>
+                  <circle cx="110" cy="30" r="22" fill="white" opacity="0.9"/>
+                  <circle cx="130" cy="35" r="16" fill="white" opacity="0.8"/>
+                  <text x="150" y="38" fill="#f8fafc" font-size="12" font-weight="bold">t₃: Cloud Occlusion Filtered</text>
+                </g>
+
+                <!-- Synthesized Composite Output (shown on hover or click) -->
+                <g id="synthesizedIndicator" transform="translate(470, 240)">
+                  <rect x="0" y="0" width="120" height="40" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+                  <text x="60" y="24" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold">Coverage(R) = 100%</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- S2 Grid Margin Buffer Toggle -->
+            <div class="border-t border-[var(--border)] pt-3 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-semibold">S2 Cell Level 13 Partitioning (~1 km²)</div>
+                  <div class="text-xs text-[var(--muted-foreground)]">Decomposing the continent into 1 MB independent processing payloads</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="toggleMarginBuffer" class="sr-only peer" checked>
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  <span class="ml-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">+150m Margin Buffer</span>
+                </label>
+              </div>
+
+              <!-- Interactive S2 Margin Diagram -->
+              <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-[var(--border)] flex items-center justify-center">
+                <svg class="w-72 h-36" viewBox="0 0 300 150">
+                  <!-- Neighboring S2 cells -->
+                  <rect x="10" y="10" width="80" height="130" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,2"/>
+                  <text x="50" y="75" text-anchor="middle" font-size="10" fill="#94a3b8">S2#107</text>
+
+                  <rect x="210" y="10" width="80" height="130" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,2"/>
+                  <text x="250" y="75" text-anchor="middle" font-size="10" fill="#94a3b8">S2#109</text>
+
+                  <!-- Primary S2#108 Cell -->
+                  <rect x="100" y="20" width="100" height="110" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+                  <text x="150" y="75" text-anchor="middle" font-size="12" font-weight="bold" fill="#10b981">S2#108</text>
+
+                  <!-- 150m Margin Buffer Rectangle -->
+                  <rect id="rectMarginBuffer" x="80" y="8" width="140" height="134" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,3"/>
+                  <text id="textMarginLabel" x="150" y="138" text-anchor="middle" font-size="9" fill="#f59e0b" font-weight="bold">+150m Buffer (Prevents Truncation)</text>
+
+                  <!-- Farm polygon straddling boundary -->
+                  <path d="M 85,45 L 125,40 L 130,85 L 90,80 Z" fill="#22c55e" opacity="0.8" stroke="#15803d" stroke-width="1.5"/>
+                  <text x="105" y="65" text-anchor="middle" font-size="8" fill="white" font-weight="bold">Farm</text>
+                </svg>
+              </div>
+              <p id="marginExplanation" class="text-xs text-[var(--muted-foreground)]">
+                ✅ <strong>With Buffer:</strong> Farm parcel straddling the border between S2#107 and S2#108 is fully captured and stitched by BAT, eliminating cut-off parcels.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- STAGE 2: Multi-Scale Panoptic U-Net (5 Heads) -->
+        <section id="stepSection2" class="step-section hidden bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-blue-500 text-white inline-flex items-center justify-center text-xs">2</span>
+              <span>Multi-Scale Panoptic U-Net (5 Prediction Heads)</span>
+            </h2>
+            <span class="text-xs font-mono px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded border border-[var(--border)]">Fig 1(c-e)</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-[var(--border)] space-y-4">
+            <!-- 5 Heads Switcher -->
+            <div class="flex flex-wrap gap-2">
+              <button class="head-btn active px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition shadow-sm" data-head="ground">S_ground (Fields & Ponds)</button>
+              <button class="head-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition" data-head="aff_field">A_ground (Field Affinities)</button>
+              <button class="head-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition" data-head="aff_well">A_well (Dug Wells)</button>
+              <button class="head-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition" data-head="aff_tree">A_tree (Woodland Trees)</button>
+              <button class="head-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition" data-head="mask_cloud">A_cloud (Cloud Mask)</button>
+            </div>
+
+            <!-- Neural Heatmap Visualization Canvas -->
+            <div class="relative h-64 bg-slate-900 rounded-lg overflow-hidden border border-slate-700 flex items-center justify-center p-3">
+              <svg id="svgNeuralView" class="w-full h-full" viewBox="0 0 500 240">
+                <!-- Neural Architecture Schematic (Left side) -->
+                <rect x="20" y="90" width="50" height="60" rx="4" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5"/>
+                <text x="45" y="125" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Tile</text>
+
+                <!-- ResNet50 Encoder -->
+                <rect x="90" y="60" width="40" height="120" rx="4" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
+                <text x="110" y="125" text-anchor="middle" font-size="9" fill="white" transform="rotate(-90 110 125)">ResNet-50</text>
+
+                <!-- Multi-Scale Decoder -->
+                <rect x="150" y="40" width="45" height="160" rx="4" fill="#10b981" stroke="#6ee7b7" stroke-width="1.5"/>
+                <text x="172" y="125" text-anchor="middle" font-size="9" fill="white" transform="rotate(-90 172 125)">Multi-Scale U-Net</text>
+
+                <!-- Output Head Connectors -->
+                <path d="M 195,60 C 230,60 230,45 260,45" stroke="#ef4444" stroke-width="2" fill="none"/>
+                <path d="M 195,90 C 230,90 230,85 260,85" stroke="#22c55e" stroke-width="3" fill="none"/>
+                <path d="M 195,120 C 230,120 230,125 260,125" stroke="#3b82f6" stroke-width="2" fill="none"/>
+                <path d="M 195,150 C 230,150 230,165 260,165" stroke="#eab308" stroke-width="2" fill="none"/>
+                <path d="M 195,180 C 230,180 230,205 260,205" stroke="#94a3b8" stroke-width="2" fill="none"/>
+
+                <!-- 5 Head Display Box (Right side dynamic) -->
+                <g id="gHeadDisplay" transform="translate(270, 20)">
+                  <rect x="0" y="0" width="210" height="200" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+                  
+                  <!-- Dynamic head content rendered by JS -->
+                  <g id="dynamicHeadGraphic"></g>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Deep Dive Note -->
+            <div id="headDescriptionText" class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-lg text-xs leading-relaxed">
+              <span class="font-bold text-emerald-800 dark:text-emerald-300">S_ground (Semantic Mask):</span> Detects whether each pixel represents agricultural land or pond surface. Provides the primary foreground mask used to seed graph growth.
+            </div>
+          </div>
+        </section>
+
+        <!-- STAGE 3: BAT Stitching & Deduplication -->
+        <section id="stepSection3" class="step-section hidden bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-amber-500 text-white inline-flex items-center justify-center text-xs">3</span>
+              <span>BAT Stitching & Multi-Temporal Deduplication</span>
+            </h2>
+            <span class="text-xs font-mono px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded border border-[var(--border)]">Algorithm 1</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-[var(--border)] space-y-4">
+            <!-- Formula Interactive Playground -->
+            <div class="p-3 rounded-lg bg-white dark:bg-slate-800 border border-[var(--border)] space-y-3">
+              <div class="text-xs font-semibold text-[var(--muted-foreground)]">Tile Quality Scoring Equation (Eq 1):</div>
+              <div class="p-2.5 bg-slate-100 dark:bg-slate-900 rounded font-mono text-center text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-bold">
+                Score(V) = w_res·(1/GSD) + w_age·exp(-λ·age) + w_conf·Confidence
+              </div>
+
+              <!-- Sliders to test scoring -->
+              <div class="grid grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label class="text-[11px] text-[var(--muted-foreground)] block">GSD (Resolution): <span id="valGsd" class="font-bold">10m</span></label>
+                  <input type="range" id="sliderGsd" min="1" max="30" value="10" class="w-full mt-1 accent-emerald-600">
+                </div>
+                <div>
+                  <label class="text-[11px] text-[var(--muted-foreground)] block">Age (Months): <span id="valAge" class="font-bold">3m</span></label>
+                  <input type="range" id="sliderAge" min="0" max="24" value="3" class="w-full mt-1 accent-emerald-600">
+                </div>
+                <div>
+                  <label class="text-[11px] text-[var(--muted-foreground)] block">Confidence: <span id="valConf" class="font-bold">0.92</span></label>
+                  <input type="range" id="sliderConf" min="50" max="100" value="92" class="w-full mt-1 accent-emerald-600">
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-[var(--border)] text-xs">
+                <span>Calculated Tile Priority Score:</span>
+                <span id="computedScore" class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">0.864</span>
+              </div>
+            </div>
+
+            <!-- Stitching Animation Canvas -->
+            <div class="relative h-48 bg-slate-900 rounded-lg overflow-hidden border border-slate-700 flex items-center justify-center p-3">
+              <svg class="w-full h-full" viewBox="0 0 400 160">
+                <!-- Fragment from Tile A -->
+                <path id="fragA" d="M 60,30 L 170,25 L 170,130 L 60,120 Z" fill="rgba(59, 130, 246, 0.4)" stroke="#3b82f6" stroke-width="2" stroke-dasharray="3,3"/>
+                <text x="100" y="80" fill="#93c5fd" font-size="11">Tile A Fragment</text>
+
+                <!-- Fragment from Tile B -->
+                <path id="fragB" d="M 170,25 L 280,35 L 290,125 L 170,130 Z" fill="rgba(234, 179, 8, 0.4)" stroke="#eab308" stroke-width="2" stroke-dasharray="3,3"/>
+                <text x="210" y="80" fill="#fde047" font-size="11">Tile B Fragment</text>
+
+                <!-- BAT Stitched Union (Overlay) -->
+                <path id="batStitchedUnion" class="transition-all duration-500" d="M 60,30 L 280,35 L 290,125 L 60,120 Z" fill="rgba(34, 197, 94, 0.55)" stroke="#22c55e" stroke-width="2.5" opacity="0"/>
+                
+                <text id="batStatusText" x="200" y="150" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="bold">Fragmented Across Tile Seam (Overlap &gt; 15%)</text>
+              </svg>
+            </div>
+            <div class="flex justify-end">
+              <button id="btnSimulateStitch" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition">
+                ⚡ Perform BAT Stitching
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- STAGE 4: Geometric Dagger Removal (The Scissors Lab!) -->
+        <section id="stepSection4" class="step-section hidden bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-rose-500 text-white inline-flex items-center justify-center text-xs">4</span>
+              <span>Geometric Dagger Removal: Pruning Neural Spikes</span>
+            </h2>
+            <span class="text-xs font-mono px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded border border-[var(--border)]">Algorithms 4 & 5</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-amber-50/50 dark:bg-slate-900/80 border-2 border-amber-300 dark:border-amber-800/60 space-y-4 relative">
+            
+            <!-- Xiaohei with Scissors Mascot Floating Badge -->
+            <div class="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-amber-200 dark:border-amber-900 shadow-sm">
+              <!-- Cute mascot icon -->
+              <div class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center relative shadow-md flex-shrink-0">
+                <!-- Xiaohei eyes -->
+                <div class="flex items-center gap-1.5">
+                  <div class="w-2 h-3.5 bg-white rounded-full"></div>
+                  <div class="w-2 h-3.5 bg-white rounded-full"></div>
+                </div>
+                <!-- Golden scissors in hands -->
+                <span class="absolute -right-1 -bottom-1 text-base bobble-anim">✂️</span>
+              </div>
+              <div class="text-xs">
+                <div class="font-extrabold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                  <span>Xiaohei's Quality Control Lab</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-200 dark:bg-amber-950 text-amber-900 dark:text-amber-200">Interactive</span>
+                </div>
+                <p class="text-[var(--muted-foreground)] text-[11px] mt-0.5">
+                  Neural segmentation outputs thin, elongated triangular spikes ("daggers"). Xiaohei snips them away using convex-hull aspect-ratio thresholding!
+                </p>
+              </div>
+            </div>
+
+            <!-- Interactive Dagger Snipping Canvas -->
+            <div class="relative h-64 bg-slate-900 rounded-lg overflow-hidden border border-slate-700 flex items-center justify-center p-2">
+              <svg id="svgDaggerCanvas" class="w-full h-full" viewBox="0 0 500 240">
+                <!-- Base agricultural parcel polygon -->
+                <polygon id="polyBaseParcel" points="100,160 380,180 430,90 280,60 170,70" fill="rgba(34, 197, 94, 0.7)" stroke="#16a34a" stroke-width="2.5"/>
+
+                <!-- The Red Dagger Spike (Triangular Artifact) -->
+                <polygon id="polyDaggerSpike" class="transition-all duration-300 cursor-pointer" points="280,60 310,5 340,70" fill="rgba(239, 68, 68, 0.85)" stroke="#dc2626" stroke-width="2"/>
+
+                <!-- Dagger Dimension Annotations -->
+                <g id="daggerDimensions">
+                  <line x1="310" y1="5" x2="310" y2="65" stroke="#fca5a5" stroke-width="1.5" stroke-dasharray="3,3"/>
+                  <text x="320" y="35" fill="#fca5a5" font-size="10" font-weight="bold">Length = 130m</text>
+
+                  <line x1="280" y1="65" x2="340" y2="65" stroke="#fca5a5" stroke-width="1.5"/>
+                  <text x="285" y="80" fill="#fca5a5" font-size="10" font-weight="bold">Width = 40m</text>
+                </g>
+
+                <!-- Cut Snip Effect (Animated on click) -->
+                <g id="cutEffect" class="hidden">
+                  <path d="M 270,62 L 350,62" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+                  <text x="310" y="55" text-anchor="middle" fill="#facc15" font-size="14" font-weight="extrabold">✂️ SNIP!</text>
+                </g>
+
+                <!-- Base Line Re-closure Indicator (Algorithm 4) -->
+                <line id="closedBaseline" x1="280" y1="60" x2="340" y2="70" stroke="#4ade80" stroke-width="3" stroke-linecap="round" opacity="0"/>
+
+                <!-- Xiaohei Mascot on Stool (Right bottom corner) -->
+                <g id="xiaoheiOnStool" transform="translate(370, 100)">
+                  <!-- Stool legs -->
+                  <line x1="45" y1="90" x2="35" y2="125" stroke="#92400e" stroke-width="3"/>
+                  <line x1="65" y1="90" x2="75" y2="125" stroke="#92400e" stroke-width="3"/>
+                  <line x1="55" y1="90" x2="55" y2="125" stroke="#78350f" stroke-width="2.5"/>
+                  <ellipse cx="55" cy="90" rx="24" ry="7" fill="#b45309" stroke="#78350f" stroke-width="2"/>
+                  <!-- Xiaohei Blob -->
+                  <ellipse cx="55" cy="65" rx="22" ry="24" fill="#0f172a"/>
+                  <ellipse cx="48" cy="60" rx="2.5" ry="4.5" fill="#ffffff"/>
+                  <ellipse cx="62" cy="60" rx="2.5" ry="4.5" fill="#ffffff"/>
+                  <!-- Arm & Scissors pointing at dagger -->
+                  <g id="scissorsArm" class="cursor-pointer">
+                    <line x1="40" y1="68" x2="15" y2="55" stroke="#0f172a" stroke-width="4" stroke-linecap="round"/>
+                    <text x="5" y="55" font-size="20">✂️</text>
+                  </g>
+                </g>
+
+                <!-- Live Aspect Ratio Badge -->
+                <g transform="translate(15, 20)">
+                  <rect x="0" y="0" width="180" height="42" rx="6" fill="#0f172a" opacity="0.9" stroke="#334155" stroke-width="1"/>
+                  <text x="10" y="18" fill="#94a3b8" font-size="10">Aspect Ratio: 130m / 40m =</text>
+                  <text id="txtAspectCalc" x="145" y="18" fill="#f87171" font-size="11" font-weight="bold">3.25</text>
+                  <text id="txtDaggerStatus" x="10" y="34" fill="#f87171" font-size="10" font-weight="bold">⚠️ 3.25 &gt; dt (Dagger Artifact)</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Controls: Threshold Slider & Action Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+              <div class="w-full sm:w-1/2">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-[var(--muted-foreground)]">Dagger Threshold Ratio (d_t):</span>
+                  <span id="valThresholdRatio" class="font-extrabold text-amber-600 dark:text-amber-400">3.0</span>
+                </div>
+                <input type="range" id="sliderThresholdRatio" min="15" max="50" value="30" class="w-full accent-amber-600">
+              </div>
+
+              <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button id="btnSnipDagger" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                  <span>✂️ Snip Dagger With Xiaohei</span>
+                </button>
+                <button id="btnResetDagger" class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 text-xs font-semibold transition">
+                  ↺ Reset
+                </button>
+              </div>
+            </div>
+
+            <div id="snipMessage" class="hidden p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 font-medium">
+              🎉 <strong>Dagger Pruned!</strong> Vertices removed and baseline closed via Algorithm 4. Farm polygon is now geometrically smooth and topologically valid!
+            </div>
+          </div>
+        </section>
+
+        <!-- STAGE 5: Finished Cadastral Parcel & S2 API Delivery -->
+        <section id="stepSection5" class="step-section hidden bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-emerald-600 text-white inline-flex items-center justify-center text-xs">5</span>
+              <span>Finished Cadastral Parcel & Continental S2 API</span>
+            </h2>
+            <span class="text-xs font-mono px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded border border-[var(--border)]">Fig 1(h)</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-[var(--border)] space-y-4">
+            <!-- Final Parcel Display with authoritative tag -->
+            <div class="relative h-64 bg-slate-900 rounded-lg overflow-hidden border border-slate-700 flex items-center justify-center p-3">
+              <svg class="w-full h-full" viewBox="0 0 500 240">
+                <rect width="500" height="240" fill="url(#gridPattern)"/>
+
+                <!-- Finished Pristine Parcel Polygon -->
+                <polygon points="120,165 370,185 410,75 160,55" fill="rgba(16, 185, 129, 0.85)" stroke="#34d399" stroke-width="3"/>
+
+                <!-- Authoritative Plus Code Badge Callout -->
+                <g transform="translate(170, 85)">
+                  <rect x="0" y="0" width="170" height="80" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="2"/>
+                  <text x="15" y="24" fill="#fbbf24" font-size="11" font-weight="extrabold">PLUS CODE: 7JVW52GR+2X</text>
+                  <text x="15" y="42" fill="#cbd5e1" font-size="10">ALU Type: Field (Ground)</text>
+                  <text x="15" y="58" fill="#cbd5e1" font-size="10">Area: 2.45 ha (6.05 acres)</text>
+                  <text x="15" y="74" fill="#34d399" font-size="10" font-weight="bold">Confidence: 0.942</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- JSON API Payload Preview -->
+            <div class="p-3 bg-slate-900 text-slate-200 rounded-lg font-mono text-xs overflow-x-auto space-y-1">
+              <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Continental S2 API Response:</div>
+              <pre class="text-[11px] text-emerald-400">{
+  "id": "7JVW52GR+2X",
+  "alu_type": "FIELD_GROUND",
+  "area_ha": 2.45,
+  "area_acres": 6.05,
+  "confidence": 0.942,
+  "s2_cell_id": "0x3bc1... (Level 13)",
+  "geometry": { "type": "Polygon", "coordinates": [[[77.59, 12.97], ...]] }
+}</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Stepper Navigation Controls -->
+        <div class="flex items-center justify-between p-3 bg-[var(--card)] border border-[var(--border)] rounded-xl">
+          <button id="btnPrevStep" class="px-3.5 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition" disabled>
+            ← Previous Step
+          </button>
+          <span id="stepCounter" class="text-xs font-medium text-[var(--muted-foreground)]">Step 1 of 5</span>
+          <button id="btnNextStep" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition">
+            Next Step →
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Column: Educational Narrative & Original Paper Spec (5 Cols) -->
+      <div class="lg:col-span-5 space-y-4">
+        
+        <!-- Explanatory Card for Current Step -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 id="panelStepTitle" class="font-bold text-base text-[var(--foreground)]">Step 1: Multi-Temporal Stacking & S2 Grids</h3>
+            <span id="panelStepBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">Phase: Ingestion</span>
+          </div>
+
+          <div id="panelStepContent" class="text-xs text-[var(--muted-foreground)] leading-relaxed space-y-2.5">
+            <p>
+              Smallholder agricultural landscapes present two fundamental hurdles: small parcel sizes (&lt; 2 hectares) and frequent cloud cover during monsoon farming seasons (Kharif).
+            </p>
+            <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-[var(--border)] space-y-1.5">
+              <div class="font-semibold text-[var(--foreground)]">Key Mechanisms:</div>
+              <ul class="list-disc list-inside space-y-1">
+                <li><strong>Multi-temporal Stack:</strong> Combines passes across vegetative peaks (monsoon lush) and harvest periods (soil boundaries).</li>
+                <li><strong>Cloud Shadow Removal:</strong> Pixel-level masking ensures clear composite coverage across the subcontinent.</li>
+                <li><strong>S2 Level 13 Sharding:</strong> Decomposes continental rasters into manageable ~1 km² spherical buckets (~1 MB payload each).</li>
+                <li><strong>+150m Margin Buffer:</strong> Guarantees boundary farms crossing tile lines are processed without clipping.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Original Cartoon Figure 1 Reference Drawer -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-sm space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5">
+              <span>🎨 Original Illustration Style</span>
+            </span>
+            <button id="btnToggleCartoonModal" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+              Expand Original Figure
+            </button>
+          </div>
+          <div class="relative rounded-lg overflow-hidden border border-[var(--border)] group cursor-pointer" id="imgThumbContainer">
+            <img src="xiaohei_figure1_alu.jpg" alt="ALU Pipeline Illustration Figure 1" class="w-full h-36 object-cover group-hover:scale-105 transition duration-300">
+            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold">
+              🔍 Click to View Full Illustration
+            </div>
+          </div>
+          <div class="text-[11px] text-[var(--muted-foreground)]">
+            Features <strong>Xiaohei</strong> on a stool clipping dagger spikes, highlighting the 4 core steps: Multi-temporal stack, 5-head U-Net, BAT stitching, and dagger removal.
+          </div>
+        </div>
+
+        <!-- 3Blue1Brown Narration Transcript Box -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-sm space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold flex items-center gap-1.5">
+              <span>🎙️ 3B1B Narration Script</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono">32s Synchronized</span>
+          </div>
+          <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-[11px] text-[var(--muted-foreground)]" id="transcriptList">
+            <div class="transcript-item p-2 rounded border border-transparent transition cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800" data-time="0.2" data-step="1">
+              <span class="font-mono text-emerald-600 font-bold">[00:00]</span> "To delineate 100 million smallholder farms, we stack multi-temporal satellite passes, combining seasonal crops while removing clouds."
+            </div>
+            <div class="transcript-item p-2 rounded border border-transparent transition cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800" data-time="8.2" data-step="1">
+              <span class="font-mono text-emerald-600 font-bold">[00:08]</span> "We partition into Level 13 S2 cells, using a 150-meter buffer to preserve boundary farms."
+            </div>
+            <div class="transcript-item p-2 rounded border border-transparent transition cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800" data-time="15.2" data-step="2">
+              <span class="font-mono text-emerald-600 font-bold">[00:15]</span> "A multi-scale U-Net with five heads predicts ground semantics and pixel affinities for fields, wells, and trees."
+            </div>
+            <div class="transcript-item p-2 rounded border border-transparent transition cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800" data-time="22.2" data-step="4">
+              <span class="font-mono text-emerald-600 font-bold">[00:22]</span> "BAT deduplication stitches overlapping tiles, while dagger removal prunes sharp neural spike artifacts."
+            </div>
+            <div class="transcript-item p-2 rounded border border-transparent transition cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800" data-time="28.6" data-step="5">
+              <span class="font-mono text-emerald-600 font-bold">[00:28]</span> "Delivering clean cadastral parcels via S2 APIs."
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- MODAL: 3Blue1Brown Explainer Video Player -->
+    <div id="videoModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl max-w-4xl w-full p-5 space-y-4 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🎬</span>
+            <div>
+              <h3 class="font-bold text-base text-[var(--foreground)]">3Blue1Brown Style Figure 1 Explainer Video</h3>
+              <p class="text-xs text-[var(--muted-foreground)]">32-second Manim dark-grid animation with synchronized British voice narration</p>
+            </div>
+          </div>
+          <button id="btnCloseVideoModal" class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-sm flex items-center justify-center">✕</button>
+        </div>
+
+        <div class="relative bg-black rounded-xl overflow-hidden aspect-video border border-slate-700 flex items-center justify-center">
+          <video id="modalVideoPlayer" controls class="w-full h-full object-contain">
+            <source src="alu_figure1_narrated.mp4" type="video/mp4">
+            Your browser does not support HTML video.
+          </video>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+          <span>Source: Dua et al., KDD '26 ALU Pipeline</span>
+          <a href="alu_figure1_narrated.mp4" download class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">⬇️ Download Narrated MP4</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Full Size Cartoon Illustration View -->
+    <div id="cartoonModal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl max-w-4xl w-full p-4 space-y-3 shadow-2xl relative">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-sm">Figure 1: Illustration Style (xiaohei_figure1_alu.jpg)</h3>
+          <button id="btnCloseCartoonModal" class="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-800 text-xs flex items-center justify-center">✕</button>
+        </div>
+        <div class="rounded-xl overflow-hidden max-h-[75vh] flex items-center justify-center bg-white">
+          <img src="xiaohei_figure1_alu.jpg" alt="Figure 1 Illustration Style" class="max-h-[75vh] object-contain">
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden Audio element for voiceover playback in page -->
+    <audio id="mainAudioPlayer" preload="auto">
+      <source src="alu_figure1_narration.m4a" type="audio/mp4">
+    </audio>
+
+  </div>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    // State management
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    const stepInfo = {
+      1: {
+        title: "Step 1: Multi-Temporal Stacking & S2 Grids",
+        badge: "Phase: Ingestion & Partitioning",
+        content: `<p>Smallholder farms average under 2 hectares and suffer from high monsoon cloud occlusion. To achieve complete continental coverage, ALU synthesizes multiple satellite passes across seasons (Kharif monsoon lush, Rabi post-harvest soil).</p>
+        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-[var(--border)] space-y-1.5">
+          <div class="font-semibold text-[var(--foreground)]">Key Mechanisms:</div>
+          <ul class="list-disc list-inside space-y-1">
+            <li><strong>S2 Level 13 Sharding:</strong> Decomposes continental imagery into ~1 km² cells (~1 MB payload each) for linear cloud-scale parallelization.</li>
+            <li><strong>+150m Margin Buffer:</strong> Captures boundary farms spanning across cell boundaries, preventing truncated parcel cuts.</li>
+          </ul>
+        </div>`
+      },
+      2: {
+        title: "Step 2: Multi-Scale Panoptic U-Net (5 Heads)",
+        badge: "Phase: Neural Panoptic Inference",
+        content: `<p>Standard semantic segmentation fails in smallholder farms because field boundaries (bunds) are sub-meter ridges narrower than Sentinel-2 10m pixels. ALU solves this using <strong>5 simultaneous prediction heads</strong>.</p>
+        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-[var(--border)] space-y-1.5">
+          <div class="font-semibold text-[var(--foreground)]">The 5 Heads:</div>
+          <ul class="list-disc list-inside space-y-1">
+            <li><strong>S_ground:</strong> Semantic mask identifying fields and irrigation ponds.</li>
+            <li><strong>A_ground:</strong> Field pixel affinity (5x5 neighborhood probability that adjacent pixels belong to the SAME farm).</li>
+            <li><strong>A_well:</strong> Identifies dug wells (critical for irrigation analysis).</li>
+            <li><strong>A_tree:</strong> Woodland affinities to prevent canopy overlap.</li>
+            <li><strong>A_cloud:</strong> Atmospheric cloud and shadow exclusion mask.</li>
+          </ul>
+        </div>`
+      },
+      3: {
+        title: "Step 3: BAT Stitching & Conflict Resolution",
+        badge: "Phase: Boundary Alignment & Tracking",
+        content: `<p>After parallel inference across S2 cells, detections must be reconciled across tile boundaries and multi-temporal passes using the <strong>BAT Workflow (Algorithm 1)</strong>.</p>
+        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-[var(--border)] space-y-1.5">
+          <div class="font-semibold text-[var(--foreground)]">Multi-Factor Scoring:</div>
+          <p class="font-mono text-emerald-600 dark:text-emerald-400 text-[11px]">Score(V) = w_res·(1/GSD) + w_age·exp(-λ·age) + w_conf·Confidence</p>
+          <p>Higher-scoring passes supersede older or cloud-contaminated detections. Overlapping boundary fragments are clustered and unioned into complete polygons.</p>
+        </div>`
+      },
+      4: {
+        title: "Step 4: Geometric Dagger Removal",
+        badge: "Phase: Neural Spike Pruning (Algorithms 4 & 5)",
+        content: `<p>Neural segmentation commonly produces sharp, elongated triangular spikes projecting outwards from polygon corners, termed <strong>"Daggers"</strong>.</p>
+        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-[var(--border)] space-y-1.5">
+          <div class="font-semibold text-[var(--foreground)]">How Xiaohei Cleans the Parcel:</div>
+          <p>The algorithm computes the convex hull aspect ratio: <code>Length / Width</code>. If this ratio exceeds threshold <code>d_t</code> (typically 3.0), the spike is flagged as an artifact.</p>
+          <p>A binary search along the symmetry axis identifies the dagger vertices and prunes them in <code>O(V log L)</code> time, snapping the baseline closed cleanly!</p>
+        </div>`
+      },
+      5: {
+        title: "Step 5: Finished Cadastral Parcel & S2 API",
+        badge: "Phase: Continental Delivery",
+        content: `<p>The finished output is a pristine, topologically valid cadastral parcel tagged with standardized attributes and ready for continental-scale delivery via Google S2 APIs.</p>
+        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-[var(--border)] space-y-1.5">
+          <div class="font-semibold text-[var(--foreground)]">Delivery Attributes:</div>
+          <ul class="list-disc list-inside space-y-1">
+            <li><strong>Plus Code:</strong> Open Location Code global address (e.g. <code>7JVW52GR+2X</code>).</li>
+            <li><strong>Acreage:</strong> Exact hectare and acre area calculations.</li>
+            <li><strong>Confidence:</strong> Calibrated confidence metric (e.g. 0.942).</li>
+            <li><strong>Linear Scalability:</strong> Serves 100+ million smallholder farms for national agricultural intelligence.</li>
+          </ul>
+        </div>`
+      }
+    };
+
+    // Step switching function
+    function goToStep(step) {
+      currentStep = step;
+      // Update navigation buttons
+      document.querySelectorAll('.step-nav-btn').forEach(btn => {
+        const s = parseInt(btn.dataset.step);
+        if (s === step) {
+          btn.className = "step-nav-btn p-3 rounded-xl border text-left transition relative bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-900 dark:text-emerald-200 font-semibold shadow-sm";
+          btn.querySelector('div:first-child').className = "text-[11px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold";
+        } else {
+          btn.className = "step-nav-btn p-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-left transition";
+          btn.querySelector('div:first-child').className = "text-[11px] uppercase tracking-wider text-slate-400 font-bold";
+        }
+      });
+
+      // Update sections
+      for (let i = 1; i <= totalSteps; i++) {
+        const sec = document.getElementById(`stepSection${i}`);
+        if (sec) {
+          if (i === step) sec.classList.remove('hidden');
+          else sec.classList.add('hidden');
+        }
+      }
+
+      // Update educational narrative panel
+      const info = stepInfo[step];
+      document.getElementById('panelStepTitle').textContent = info.title;
+      document.getElementById('panelStepBadge').textContent = info.badge;
+      document.getElementById('panelStepContent').innerHTML = info.content;
+
+      // Update controls
+      document.getElementById('stepCounter').textContent = `Step ${step} of ${totalSteps}`;
+      document.getElementById('btnPrevStep').disabled = (step === 1);
+      document.getElementById('btnNextStep').textContent = (step === totalSteps) ? "Finish Tour 🌟" : "Next Step →";
+    }
+
+    // Event listeners for step navigation
+    document.querySelectorAll('.step-nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.step)));
+    });
+
+    document.getElementById('btnPrevStep').addEventListener('click', () => {
+      if (currentStep > 1) goToStep(currentStep - 1);
+    });
+
+    document.getElementById('btnNextStep').addEventListener('click', () => {
+      if (currentStep < totalSteps) goToStep(currentStep + 1);
+      else goToStep(1);
+    });
+
+    // Step 1: Margin buffer toggle
+    const toggleMargin = document.getElementById('toggleMarginBuffer');
+    const rectMargin = document.getElementById('rectMarginBuffer');
+    const textMargin = document.getElementById('textMarginLabel');
+    const marginExpl = document.getElementById('marginExplanation');
+
+    toggleMargin.addEventListener('change', () => {
+      if (toggleMargin.checked) {
+        rectMargin.setAttribute('opacity', '1');
+        textMargin.setAttribute('opacity', '1');
+        marginExpl.innerHTML = `✅ <strong>With Buffer:</strong> Farm parcel straddling the border between S2#107 and S2#108 is fully captured and stitched by BAT, eliminating cut-off parcels.`;
+      } else {
+        rectMargin.setAttribute('opacity', '0');
+        textMargin.setAttribute('opacity', '0');
+        marginExpl.innerHTML = `❌ <strong>Without Buffer:</strong> Farm parcel is severed right at the S2#108 border line, creating incomplete truncated parcels!`;
+      }
+    });
+
+    // Step 2: 5-head neural switcher
+    const headData = {
+      ground: {
+        title: "S_ground (Semantic Mask)",
+        desc: "Semantic segmentation separating fields and water ponds from background. Acts as the initial seed mask for graph expansion.",
+        svg: `<rect x="10" y="10" width="190" height="180" rx="6" fill="#065f46" opacity="0.8"/>
+              <path d="M 30,30 L 100,25 L 110,100 L 40,90 Z" fill="#34d399" stroke="#059669" stroke-width="2"/>
+              <path d="M 120,40 L 180,50 L 170,120 L 115,110 Z" fill="#34d399" stroke="#059669" stroke-width="2"/>
+              <text x="70" y="65" fill="#064e3b" font-size="10" font-weight="bold">Field A</text>
+              <text x="145" y="85" fill="#064e3b" font-size="10" font-weight="bold">Field B</text>
+              <text x="105" y="170" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="bold">Fields & Ponds Mask</text>`
+      },
+      aff_field: {
+        title: "A_ground (Field Affinities)",
+        desc: "Predicts 5x5 neighborhood affinities. Instead of fuzzy pixel borders, affinity predicts whether two adjacent pixels belong to the SAME field instance!",
+        svg: `<rect x="10" y="10" width="190" height="180" rx="6" fill="#1e293b"/>
+              <!-- Affinity vectors -->
+              <g stroke="#38bdf8" stroke-width="1.5" marker-end="url(#arrow)">
+                <line x1="40" y1="50" x2="65" y2="50"/>
+                <line x1="65" y1="50" x2="65" y2="75"/>
+                <line x1="130" y1="50" x2="155" y2="50"/>
+                <line x1="155" y1="50" x2="155" y2="75"/>
+              </g>
+              <!-- Repulsion barrier between fields -->
+              <line x1="105" y1="20" x2="105" y2="140" stroke="#ef4444" stroke-width="3" stroke-dasharray="4,2"/>
+              <text x="105" y="170" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold">5x5 Pixel Affinity Vectors</text>`
+      },
+      aff_well: {
+        title: "A_well (Dug Well Affinities)",
+        desc: "Delineates circular dug wells across farms. Critical for monitoring irrigation access in drought-prone rural zones.",
+        svg: `<rect x="10" y="10" width="190" height="180" rx="6" fill="#0f172a"/>
+              <circle cx="95" cy="85" r="16" fill="#0284c7" stroke="#38bdf8" stroke-width="2"/>
+              <circle cx="95" cy="85" r="7" fill="#0c4a6e"/>
+              <text x="120" y="88" fill="#7dd3fc" font-size="11" font-weight="bold">Dug Well (r=3.5m)</text>
+              <text x="105" y="170" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold">Irrigation Well Detection</text>`
+      },
+      aff_tree: {
+        title: "A_tree (Woodland Tree Affinities)",
+        desc: "Identifies tree clusters and boundary hedgerows, ensuring tree crowns do not distort cadastral farm boundaries.",
+        svg: `<rect x="10" y="10" width="190" height="180" rx="6" fill="#0f172a"/>
+              <!-- Tree canopy -->
+              <circle cx="70" cy="70" r="18" fill="#15803d" opacity="0.9"/>
+              <circle cx="90" cy="65" r="16" fill="#16a34a" opacity="0.9"/>
+              <circle cx="85" cy="85" r="14" fill="#22c55e" opacity="0.9"/>
+              <text x="105" y="170" text-anchor="middle" fill="#4ade80" font-size="11" font-weight="bold">Woodland Canopy Grouping</text>`
+      },
+      mask_cloud: {
+        title: "A_cloud (Cloud Mask)",
+        desc: "Detects opaque clouds and trailing cloud shadows, dynamically zeroing out contaminated pixels from graph growth.",
+        svg: `<rect x="10" y="10" width="190" height="180" rx="6" fill="#1e293b"/>
+              <path d="M 50,80 Q 70,50 100,60 Q 130,50 150,75 Q 165,95 140,110 Q 60,115 50,80 Z" fill="#e2e8f0" opacity="0.85"/>
+              <ellipse cx="110" cy="135" rx="45" ry="12" fill="#020617" opacity="0.6"/>
+              <text x="110" y="140" fill="#94a3b8" font-size="9" text-anchor="middle">Shadow</text>
+              <text x="105" y="170" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="bold">Atmospheric Exclusion</text>`
+      }
+    };
+
+    function renderHead(headKey) {
+      const h = headData[headKey];
+      document.getElementById('dynamicHeadGraphic').innerHTML = h.svg;
+      document.getElementById('headDescriptionText').innerHTML = `<span class="font-bold text-emerald-800 dark:text-emerald-300">${h.title}:</span> ${h.desc}`;
+    }
+    renderHead('ground');
+
+    document.querySelectorAll('.head-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.head-btn').forEach(b => {
+          b.className = "head-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition";
+        });
+        btn.className = "head-btn active px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition shadow-sm";
+        renderHead(btn.dataset.head);
+      });
+    });
+
+    // Step 3: BAT equation live calculation
+    const sliderGsd = document.getElementById('sliderGsd');
+    const sliderAge = document.getElementById('sliderAge');
+    const sliderConf = document.getElementById('sliderConf');
+
+    function updateBATScore() {
+      const gsd = parseFloat(sliderGsd.value);
+      const age = parseFloat(sliderAge.value);
+      const conf = parseFloat(sliderConf.value) / 100.0;
+
+      document.getElementById('valGsd').textContent = `${gsd}m`;
+      document.getElementById('valAge').textContent = `${age}m`;
+      document.getElementById('valConf').textContent = conf.toFixed(2);
+
+      // Score = 0.4 * (10 / gsd) + 0.3 * exp(-0.1 * age) + 0.3 * conf
+      const score = (0.4 * (10 / Math.max(gsd, 1)) + 0.3 * Math.exp(-0.08 * age) + 0.3 * conf);
+      document.getElementById('computedScore').textContent = Math.min(score, 1.0).toFixed(3);
+    }
+
+    [sliderGsd, sliderAge, sliderConf].forEach(s => s.addEventListener('input', updateBATScore));
+
+    // BAT Stitching Simulation Button
+    const btnStitch = document.getElementById('btnSimulateStitch');
+    const batUnion = document.getElementById('batStitchedUnion');
+    const batStatus = document.getElementById('batStatusText');
+    let stitched = false;
+
+    btnStitch.addEventListener('click', () => {
+      stitched = !stitched;
+      if (stitched) {
+        batUnion.setAttribute('opacity', '1');
+        batStatus.textContent = "✓ Stitched Seamlessly via BAT Cluster Membership (Algorithm 1)";
+        batStatus.setAttribute('fill', '#4ade80');
+        btnStitch.textContent = "↺ Reset Tile Seam";
+      } else {
+        batUnion.setAttribute('opacity', '0');
+        batStatus.textContent = "Fragmented Across Tile Seam (Overlap > 15%)";
+        batStatus.setAttribute('fill', '#cbd5e1');
+        btnStitch.textContent = "⚡ Perform BAT Stitching";
+      }
+    });
+
+    // Step 4: The Dagger Removal Lab (Interactive Scissors)
+    const polyDagger = document.getElementById('polyDaggerSpike');
+    const polyBase = document.getElementById('polyBaseParcel');
+    const closedLine = document.getElementById('closedBaseline');
+    const cutEffect = document.getElementById('cutEffect');
+    const daggerDim = document.getElementById('daggerDimensions');
+    const txtStatus = document.getElementById('txtDaggerStatus');
+    const snipMsg = document.getElementById('snipMessage');
+    const btnSnip = document.getElementById('btnSnipDagger');
+    const btnReset = document.getElementById('btnResetDagger');
+    const sliderRatio = document.getElementById('sliderThresholdRatio');
+    const valRatio = document.getElementById('valThresholdRatio');
+    let isDaggerPruned = false;
+
+    function evaluateDagger() {
+      const dt = parseFloat(sliderRatio.value) / 10.0;
+      valRatio.textContent = dt.toFixed(1);
+      const aspect = 3.25;
+
+      if (isDaggerPruned) return;
+
+      if (aspect > dt) {
+        txtStatus.innerHTML = `⚠️ 3.25 &gt; ${dt.toFixed(1)} (Dagger Artifact)`;
+        txtStatus.setAttribute('fill', '#f87171');
+        polyDagger.setAttribute('fill', 'rgba(239, 68, 68, 0.85)');
+        polyDagger.setAttribute('stroke', '#dc2626');
+        btnSnip.disabled = false;
+        btnSnip.className = "px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5";
+      } else {
+        txtStatus.innerHTML = `✓ 3.25 ≤ ${dt.toFixed(1)} (Accepted Corner)`;
+        txtStatus.setAttribute('fill', '#4ade80');
+        polyDagger.setAttribute('fill', 'rgba(34, 197, 94, 0.5)');
+        polyDagger.setAttribute('stroke', '#16a34a');
+      }
+    }
+
+    sliderRatio.addEventListener('input', evaluateDagger);
+
+    function snipDaggerAction() {
+      if (isDaggerPruned) return;
+      isDaggerPruned = true;
+
+      // Animation effect
+      cutEffect.classList.remove('hidden');
+      polyDagger.style.transform = "translate(40px, -40px) rotate(25deg)";
+      polyDagger.style.opacity = "0";
+
+      setTimeout(() => {
+        cutEffect.classList.add('hidden');
+        daggerDim.setAttribute('opacity', '0');
+        closedLine.setAttribute('opacity', '1');
+        polyBase.setAttribute('fill', 'rgba(16, 185, 129, 0.85)');
+        polyBase.setAttribute('stroke', '#34d399');
+        txtStatus.innerHTML = "✓ Dagger Vertices Pruned (Algorithm 4)";
+        txtStatus.setAttribute('fill', '#4ade80');
+        snipMsg.classList.remove('hidden');
+        btnSnip.disabled = true;
+        btnSnip.className = "px-4 py-2 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 font-bold text-xs cursor-not-allowed";
+      }, 400);
+    }
+
+    btnSnip.addEventListener('click', snipDaggerAction);
+    polyDagger.addEventListener('click', snipDaggerAction);
+    document.getElementById('scissorsArm').addEventListener('click', snipDaggerAction);
+
+    btnReset.addEventListener('click', () => {
+      isDaggerPruned = false;
+      polyDagger.style.transform = "none";
+      polyDagger.style.opacity = "1";
+      daggerDim.setAttribute('opacity', '1');
+      closedLine.setAttribute('opacity', '0');
+      polyBase.setAttribute('fill', 'rgba(34, 197, 94, 0.7)');
+      polyBase.setAttribute('stroke', '#16a34a');
+      snipMsg.classList.add('hidden');
+      evaluateDagger();
+    });
+
+    // Modals Handling
+    const videoModal = document.getElementById('videoModal');
+    const modalVideo = document.getElementById('modalVideoPlayer');
+    const btnPlayVid = document.getElementById('btnPlayNarratedVideo');
+    const btnCloseVid = document.getElementById('btnCloseVideoModal');
+
+    btnPlayVid.addEventListener('click', () => {
+      videoModal.classList.remove('hidden');
+      modalVideo.play();
+    });
+
+    btnCloseVid.addEventListener('click', () => {
+      videoModal.classList.add('hidden');
+      modalVideo.pause();
+    });
+
+    const cartoonModal = document.getElementById('cartoonModal');
+    const btnOpenCartoon = document.getElementById('btnToggleCartoonModal');
+    const imgThumb = document.getElementById('imgThumbContainer');
+    const btnCloseCartoon = document.getElementById('btnCloseCartoonModal');
+
+    [btnOpenCartoon, imgThumb].forEach(el => el.addEventListener('click', () => {
+      cartoonModal.classList.remove('hidden');
+    }));
+
+    btnCloseCartoon.addEventListener('click', () => {
+      cartoonModal.classList.add('hidden');
+    });
+
+    // Close modals on escape
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        videoModal.classList.add('hidden');
+        modalVideo.pause();
+        cartoonModal.classList.add('hidden');
+      }
+    });
+
+    // Audio Narration Synchronization
+    const audioPlayer = document.getElementById('mainAudioPlayer');
+    const btnToggleAudio = document.getElementById('btnToggleAudioNarration');
+    const audioIcon = document.getElementById('audioIcon');
+    const audioLabel = document.getElementById('audioLabel');
+    const audioProgressContainer = document.getElementById('audioProgressBarContainer');
+    const audioProgressBar = document.getElementById('audioProgressBar');
+    const narrationTime = document.getElementById('narrationTime');
+    const narrationScene = document.getElementById('narrationScene');
+
+    btnToggleAudio.addEventListener('click', () => {
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+        audioIcon.textContent = "⏸️";
+        audioLabel.textContent = "Pause Narration";
+        audioProgressContainer.classList.remove('hidden');
+      } else {
+        audioPlayer.pause();
+        audioIcon.textContent = "🔊";
+        audioLabel.textContent = "Play Narration";
+      }
+    });
+
+    audioPlayer.addEventListener('timeupdate', () => {
+      const curr = audioPlayer.currentTime;
+      const dur = audioPlayer.duration || 32.0;
+      const pct = (curr / dur) * 100;
+      audioProgressBar.style.width = `${pct}%`;
+
+      const m = Math.floor(curr / 60).toString().padStart(2, '0');
+      const s = Math.floor(curr % 60).toString().padStart(2, '0');
+      narrationTime.textContent = `${m}:${s} / 00:32`;
+
+      // Auto-jump steps based on timestamps
+      if (curr < 8.0) {
+        narrationScene.textContent = "Scene 1: Multi-Temporal Passes";
+        if (currentStep !== 1) goToStep(1);
+      } else if (curr < 15.0) {
+        narrationScene.textContent = "Scene 2: S2 Spatial Sharding";
+        if (currentStep !== 1) goToStep(1);
+      } else if (curr < 22.0) {
+        narrationScene.textContent = "Scene 3: 5-Head U-Net";
+        if (currentStep !== 2) goToStep(2);
+      } else if (curr < 28.5) {
+        narrationScene.textContent = "Scene 4: BAT & Dagger Removal";
+        if (currentStep !== 4) goToStep(4);
+      } else {
+        narrationScene.textContent = "Scene 5: Finished Cadastral Parcel";
+        if (currentStep !== 5) goToStep(5);
+      }
+
+      // Highlight active transcript row
+      document.querySelectorAll('.transcript-item').forEach(item => {
+        const t = parseFloat(item.dataset.time);
+        if (curr >= t && curr < t + 7.0) {
+          item.className = "transcript-item p-2 rounded border border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/60 font-semibold transition cursor-pointer text-[var(--foreground)]";
+        } else {
+          item.className = "transcript-item p-2 rounded border border-transparent transition cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800";
+        }
+      });
+    });
+
+    audioPlayer.addEventListener('ended', () => {
+      audioIcon.textContent = "🔊";
+      audioLabel.textContent = "Replay Narration";
+      audioProgressBar.style.width = `100%`;
+    });
+
+    // Transcript click to jump audio and step
+    document.querySelectorAll('.transcript-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const t = parseFloat(item.dataset.time);
+        const s = parseInt(item.dataset.step);
+        goToStep(s);
+        audioPlayer.currentTime = t;
+        if (audioPlayer.paused) {
+          audioPlayer.play();
+          audioIcon.textContent = "⏸️";
+          audioLabel.textContent = "Pause Narration";
+          audioProgressContainer.classList.remove('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
